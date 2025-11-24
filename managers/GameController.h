@@ -1,0 +1,288 @@
+#ifndef GAMECONTROLLER_H
+#define GAMECONTROLLER_H
+
+#include "../models/WorldModel.h"
+#include "../models/PlayerModel.h"
+#include "WorldController.h"
+#include "InventoryController.h"
+#include <string>
+#include <vector>
+#include <cstdlib>
+using namespace std;
+
+class GameController
+{
+public:
+    GameController()
+    {
+        this->player = PlayerModel(1, WARRIOR);
+        this->worldController = WorldController();
+        this->inventoryController = InventoryController();
+        this->current_loc = 0;
+        this->is_combat = false;
+        
+    }
+    PlayerModel getPlayer() const
+    {
+        return this->player;
+    }
+    PlayerModel& getMutablePlayer()
+    {
+        return this->player;
+    }
+    string getCurrentLocationName() const
+    {
+        return this->worldController.getWorld(this->current_loc).getName();
+    }
+    void Move(moveDirection direction)
+    {
+        // 根據方向更新當前地點
+        switch (direction)
+        {
+        case moveDirection::NORTH:
+
+            this->current_loc = this->worldController.MoveTo(this->current_loc, moveDirection::NORTH);
+            // 更新current_loc為北方地點
+            break;
+        case moveDirection::SOUTH:
+            this->current_loc = this->worldController.MoveTo(this->current_loc, moveDirection::SOUTH);
+            // 更新current_loc為南方地點
+            break;
+        case moveDirection::EAST:
+            this->current_loc = this->worldController.MoveTo(this->current_loc, moveDirection::EAST);
+            // 更新current_loc為東方地點
+            break;
+        case moveDirection::WEST:
+            this->current_loc = this->worldController.MoveTo(this->current_loc, moveDirection::WEST);
+            // 更新current_loc為西方地點
+            break;
+        }
+    }
+    void BuyItem(const ItemModel& item) {
+        if (worldController.getWorld(current_loc).getName() != "維多利亞港" || "弓箭手村") {
+            LogEvent("只能在村莊購買物品。");
+            return;
+        }
+        if (player.getGold() >= item.price) {
+            player.deductGold(item.price);
+            inventoryController.addItem(item);
+            LogEvent("購買了 " + item.name + "，花費 " + to_string(item.price) + " 金幣。");
+        } else {
+            LogEvent("金幣不足，無法購買 " + item.name + "。");
+        }
+    }
+    bool isCombat() const
+    {
+        return this->is_combat;
+    }
+    void Combat()
+    {
+        if (is_combat)
+        {
+            return;
+        }
+        const auto &enemies = worldController.getWorld(current_loc).getCurrentEnemies();
+        if (enemies.size() > 0)
+        {
+            int random_index = std::rand() % enemies.size();
+            this->is_combat = true;
+            enemy_index = random_index;
+            Enemy current_enemy = enemies[enemy_index];
+            LogEvent("與" + current_enemy.name + " (LV" + std::to_string(current_enemy.level) + ") 展開戰鬥!");
+        }
+        else
+        {
+            // 錯誤處理
+            LogEvent("沒有可進行戰鬥的敵人");
+        }
+    }
+    const vector<Enemy> &getCurrentEnemies() const
+    {
+        return this->worldController.getWorld(this->current_loc).getCurrentEnemies();
+    }
+    vector<string> getLog(int size) const
+    {
+        // 回傳最新優先的最後 size 筆紀錄（index 最後面代表最新）
+        vector<string> result;
+        if (size <= 0 || data_log.empty())
+        {
+            return result;
+        }
+        for (int i = (int)data_log.size() - 1; i >= 0 && (int)result.size() < size; --i)
+        {
+            result.push_back(data_log[i]);
+        }
+        return result; // result[0] 為最新紀錄
+    }
+    void LogEvent(const string &event)
+    {
+        data_log.push_back(event);
+    }
+    // 戰鬥行為
+    void Attack()
+    {
+        if (!is_combat)
+            return;
+        auto &enemies = worldController.getWorld(current_loc).getCurrentEnemies();
+        if (enemy_index < 0 || enemy_index >= (int)enemies.size())
+            return;
+        int dmg = player.getAttrDmg()+player.getEquippedItem(ItemModel::WEAPON).effect; 
+        enemies[enemy_index].hp -= dmg;
+        LogEvent("你對" + enemies[enemy_index].name + "造成 " + to_string(dmg) + " 點傷害");
+        if (enemies[enemy_index].hp <= 0)
+        {
+            LogEvent(enemies[enemy_index].name + " 被擊敗！");
+            // 移除已死亡的敵人
+            if (player.gainExp(enemies[enemy_index].calcDropExp()))
+            {
+                LogEvent("升級！目前等級：" + to_string(player.getLevel()));
+            }
+            else
+            {
+                LogEvent("獲得 " + to_string(enemies[enemy_index].calcDropExp()) + " 點經驗值");
+            }
+            // 掉落物品
+            for (const auto& it : enemies[enemy_index].dropItems) {
+                inventoryController.addItem(it);
+                LogEvent("獲得物品：" + it.name);
+            }
+            enemies.erase(enemies.begin() + enemy_index);
+            is_combat = false;
+            enemy_index = -1;
+            return;
+        }
+        // 怪物反擊
+        int edmg = enemies[enemy_index].attack;
+        player.takeDamage(edmg);
+        LogEvent(enemies[enemy_index].name + " 反擊你造成 " + to_string(edmg) + " 點傷害");
+        if (player.getHp() <= 0)
+        {
+            LogEvent("你已死亡。");
+            // 死亡處理留給遊戲其他機制
+        }
+    }
+    void UseItem()
+    {
+        if (!is_combat)
+            return;
+        // Placeholder: 先回報尚未實作
+        LogEvent("使用道具(尚未實作)");
+    }
+    void Flee()
+    {
+        if (!is_combat)
+            return;
+        is_combat = false;
+        enemy_index = -1;
+        LogEvent("你成功逃跑，離開戰鬥。");
+    }
+
+    InventoryController& getInventory() {
+        return inventoryController;
+    }
+
+    void UseInventoryItem(int index) {
+        if (index < 0 || index >= inventoryController.getSize()) return;
+        
+        ItemModel& item = inventoryController.getItem(index);
+        if (item.type == ItemModel::POTION) {
+            player.heal(item.effect);
+            LogEvent("使用了 " + item.name + "，恢復了 " + to_string(item.effect) + " 點生命。");
+            inventoryController.removeItem(index);
+        } else if(item.type == ItemModel::SCROLL_TELEPORT){
+            //使用回家卷軸
+            if (is_combat){
+                LogEvent("戰鬥中無法使用回家卷軸！");
+                return;
+            }
+            this->current_loc = 0; //傳送回維多利亞港
+            LogEvent("使用了 " + item.name + "，傳送回維多利亞港。");
+            inventoryController.removeItem(index);
+        } else if(item.type == ItemModel::WAND || item.type == ItemModel::BOW || item.type == ItemModel::SWORD || item.type == ItemModel::KNIFE || item.type == ItemModel::HELMET || item.type == ItemModel::CHESTPLATE || item.type == ItemModel::LEGGINGS || item.type == ItemModel::BOOTS) {
+             EquipItem(index);
+        } else {
+            LogEvent("此物品無法直接使用。");
+        }
+    }
+
+    void EquipItem(int index) {
+        if (index < 0 || index >= inventoryController.getSize()) return;
+        ItemModel& item = inventoryController.getItem(index);
+        if (item.type == ItemModel::WAND || item.type == ItemModel::BOW || item.type == ItemModel::SWORD || item.type == ItemModel::KNIFE || item.type == ItemModel::HELMET || item.type == ItemModel::CHESTPLATE || item.type == ItemModel::LEGGINGS || item.type == ItemModel::BOOTS) {
+             LogEvent("裝備了 " + item.name);
+             if (player.isEquipped(item.type)) {
+                inventoryController.addItem(player.getEquippedItem(item.type));
+                player.UnEquip(item.type);
+             }
+             player.Equip(item);
+             inventoryController.removeItem(index);
+        } else {
+            LogEvent("此物品無法裝備。");
+        }
+    }
+
+    void DropItem(int index) {
+        if (index < 0 || index >= inventoryController.getSize()) return;
+        ItemModel item = inventoryController.getItem(index);
+        int p = item.price;
+        inventoryController.removeItem(index);
+        LogEvent("丟棄了 " + item.name);
+        if (p>0){
+
+            player.addGold(p);
+            LogEvent("獲得 " + to_string(p) + " G");
+        }
+    }
+    
+    // 強化裝備（按照類型）
+    bool EnhanceEquipment(ItemModel::Type equipType) {
+        if (!player.isEquipped(equipType)) {
+            LogEvent("該裝備欄位無裝備！");
+            return false;
+        }
+        
+        ItemModel& item = player.getEquippedItem(equipType);
+        
+        // 計算成功率：100->100->70->50->10->10->10
+        int success_rate;
+        if (item.star == 0) success_rate = 100;
+        else if (item.star == 1) success_rate = 100;
+        else if (item.star == 2) success_rate = 70;
+        else if (item.star == 3) success_rate = 50;
+        else success_rate = 10;
+        
+        // 計算所需金幣：10 * (star + 1)
+        int cost = 10 * (item.star + 1);
+        
+        if (player.getGold() < cost) {
+            LogEvent("金幣不足！需要 " + to_string(cost) + " G");
+            return false;
+        }
+        
+        // 扣除金幣
+        player.deductGold(cost);
+        
+        // 判斷是否成功
+        int random = std::rand() % 100;
+        if (random < success_rate) {
+            item.star++;
+            item.effect += 5; // 每次強化增加 5 點效果
+            LogEvent("強化成功！" + item.name + " +" + to_string(item.star));
+            return true;
+        } else {
+            LogEvent("強化失敗！");
+            return false;
+        }
+    }
+
+private:
+    bool is_combat;
+    int enemy_index;
+    vector<string> data_log;
+    int current_loc;
+    mutable WorldController worldController;
+    PlayerModel player;
+    mutable InventoryController inventoryController;
+};
+
+#endif // GAMECONTROLLER_H

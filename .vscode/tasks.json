@@ -1,0 +1,89 @@
+{
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "CMake: 配置專案",
+            "command": "cmake",
+            "args": [
+                "-S", ".",
+                "-B", "build",
+                "-G", "MinGW Makefiles",
+                "-DCMAKE_PREFIX_PATH=${workspaceFolder}/external/ftxui"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "group": "build"
+        },
+        {
+            "type": "shell",
+            "label": "CMake: 建置專案",
+            "command": "cmake",
+            "args": [
+                "--build", "build"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "dependsOn": "CMake: 配置專案",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "type": "cppbuild",
+            "label": "C/C++: g++.exe 建置使用中檔案",
+            "command": "g++",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g",
+                "${file}",
+                "-o",
+                "${fileDirname}\\${fileBasenameNoExtension}.exe",
+                "-I${workspaceFolder}",
+                "-I${workspaceFolder}/external/ftxui/include",
+                "-L${workspaceFolder}/external/ftxui/lib",
+                "-lftxui-component",
+                "-lftxui-dom",
+                "-lftxui-screen"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "detail": "使用 g++ 直接編譯"
+        },
+        {
+            "label": "執行程式 (外部終端機)",
+            "type": "shell",
+            "command": "start",
+            "args": [
+                "cmd",
+                "/k",
+                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+            ],
+            "presentation": {
+                "reveal": "never"
+            },
+            "dependsOn": "C/C++: g++.exe 建置使用中檔案",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
+        }
+    ],
+    "version": "2.0.0"
+}

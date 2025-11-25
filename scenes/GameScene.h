@@ -168,7 +168,7 @@ inline Component GameScene::Create(
                        vbox({
                            text("【角色詳細資訊】") | center | bold,
                            separator(),
-                           hbox({text("經驗: " + std::to_string(controller.getPlayer().getExp()) + "/" + std::to_string(controller.getPlayer().getCalcExpReq())), text("攻擊: 15  "), text("防禦: 8")}) | center,
+                           hbox({text("經驗: " + std::to_string(controller.getPlayer().getExp()) + "/" + std::to_string(controller.getPlayer().getCalcExpReq())), text("攻擊: " + std::to_string(controller.getPlayer().CalcDamage())), text("防禦: " + std::to_string(controller.getPlayer().CalcDef()))}) | center,
                        }) | border |
                            flex,
                        vbox({

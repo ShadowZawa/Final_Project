@@ -86,7 +86,7 @@ private:
     }
 
 public:
-    AuthManager(const string& filePath = "data/users.dat") : authFilePath(filePath) {
+    AuthManager(const string& filePath = "data/users.txt") : authFilePath(filePath) {
         // 確保資料目錄存在
         system("mkdir data 2>nul");
         loadUsers();

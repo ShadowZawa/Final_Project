@@ -126,7 +126,7 @@ public:
         auto &enemies = worldController.getWorld(current_loc).getCurrentEnemies();
         if (enemy_index < 0 || enemy_index >= (int)enemies.size())
             return;
-        int dmg = player.getAttrDmg()+player.getEquippedItem(ItemModel::WEAPON).effect; 
+        int dmg = player.CalcDamage(); 
         enemies[enemy_index].hp -= dmg;
         LogEvent("你對" + enemies[enemy_index].name + "造成 " + to_string(dmg) + " 點傷害");
         if (enemies[enemy_index].hp <= 0)
@@ -157,7 +157,12 @@ public:
         LogEvent(enemies[enemy_index].name + " 反擊你造成 " + to_string(edmg) + " 點傷害");
         if (player.getHp() <= 0)
         {
+            is_combat = false;
+            player.heal(player.getMaxHp()); // 死亡後恢復滿血
+            player.recoverMp(player.getMaxMp()); // 死亡後恢復滿魔
+            current_loc = 0; // 傳送回維多利亞港
             LogEvent("你已死亡。");
+            LogEvent("頭腦一震暈眩，你發現似乎回到了維多利亞港...");
             // 死亡處理留給遊戲其他機制
         }
     }
@@ -209,11 +214,27 @@ public:
         if (index < 0 || index >= inventoryController.getSize()) return;
         ItemModel& item = inventoryController.getItem(index);
         if (item.type == ItemModel::WAND || item.type == ItemModel::BOW || item.type == ItemModel::SWORD || item.type == ItemModel::KNIFE || item.type == ItemModel::HELMET || item.type == ItemModel::CHESTPLATE || item.type == ItemModel::LEGGINGS || item.type == ItemModel::BOOTS) {
-             LogEvent("裝備了 " + item.name);
-             if (player.isEquipped(item.type)) {
+            if (jobType::WARRIOR != player.getJobType() && (item.type == ItemModel::SWORD)) {
+                LogEvent("只有戰士職業可以裝備劍類武器！");
+                return;
+            }
+            if (jobType::MAGE != player.getJobType() && (item.type == ItemModel::WAND)) {
+                LogEvent("只有法師職業可以裝備魔杖類武器！");
+                return;
+            }
+            if (jobType::ARCHER != player.getJobType() && (item.type == ItemModel::BOW)) {
+                LogEvent("只有弓箭手職業可以裝備弓類武器！");
+                return;
+            }
+            if (jobType::THIEF != player.getJobType() && (item.type == ItemModel::KNIFE)) {
+                LogEvent("只有盜賊職業可以裝備匕首類武器！");
+                return;
+            }
+            LogEvent("裝備了 " + item.name);
+            if (player.isEquipped(item.type)) {
                 inventoryController.addItem(player.getEquippedItem(item.type));
                 player.UnEquip(item.type);
-             }
+            }
              player.Equip(item);
              inventoryController.removeItem(index);
         } else {

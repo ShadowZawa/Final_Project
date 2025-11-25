@@ -15,6 +15,8 @@
 #include "ui/StatsUI.h"
 #include "ui/MapUI.h"
 #include "models/PlayerModel.h"
+#include "managers/AuthManager.h"
+#include "managers/DataManager.h"
 using namespace std;
 using namespace ftxui;
 
@@ -36,18 +38,58 @@ enum class PopupType {
 int main() {
     auto screen = ScreenInteractive::Fullscreen();
     
+    // 確保必要的目錄存在
+    system("if not exist data mkdir data 2>nul");
+    system("if not exist saves mkdir saves 2>nul");
+    
+    // 初始化管理器
+    AuthManager authManager;
+    DataManager dataManager;
+    
     // 遊戲狀態
     GameState current_state = GameState::MENU;
     PopupType current_popup = PopupType::NONE;
 
+    std::string current_username;
+    std::string current_character_name;
+    
+    // 初始化 GameController
+    GameController controller;
     
     // 主選單
-    auto main_scene = MainScene::Create([&] {
-        current_state = GameState::PLAYING;
-    });
-    GameController controller;
-    controller.LogEvent("歡迎來到木風之谷！");
-    controller.LogEvent("當前位置: " + controller.getCurrentLocationName());
+    auto main_scene = MainScene::Create(
+        [&](const std::string& username, const std::string& character_name) {
+            current_username = username;
+            current_character_name = character_name;
+            
+            // 載入角色資料
+            PlayerModel player;
+            InventoryController inventory;
+            std::string currentMap;
+            
+            if (dataManager.load(username, character_name, player, inventory, currentMap)) {
+                // 載入存檔（包括新建角色和現有角色）
+                controller.getMutablePlayer() = player;
+                controller.getInventory() = inventory;
+                // TODO: 設定當前地圖
+                
+                // 判斷是否為新角色（等級為1且經驗為0）
+                if (player.getLevel() == 1 && player.getExp() == 0) {
+                    controller.LogEvent("歡迎來到木風之谷，" + character_name + "!");
+                    controller.LogEvent("這是你的冒險起點！");
+                } else {
+                    controller.LogEvent("歡迎回來，" + character_name + "!");
+                }
+                controller.LogEvent("當前位置: " + controller.getCurrentLocationName());
+            } else {
+                // 載入失敗（不應該發生，因為 createNewCharacter 已經創建了存檔）
+                controller.LogEvent("載入角色資料失敗！");
+            }
+            current_state = GameState::PLAYING;
+        },
+        authManager,
+        dataManager
+    );
     // 遊戲場景
     auto game_scene = GameScene::Create(
         controller,
@@ -195,6 +237,17 @@ int main() {
         loop.RunOnce();
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
         screen.Post(Event::Custom);  // 強制重新渲染
+    }
+    
+    // 遊戲結束時自動存檔
+    if (current_state == GameState::PLAYING && !current_username.empty() && !current_character_name.empty()) {
+        dataManager.save(
+            current_username, 
+            current_character_name, 
+            controller.getMutablePlayer(), 
+            controller.getInventory(), 
+            controller.getCurrentLocationName()
+        );
     }
     
     return 0;

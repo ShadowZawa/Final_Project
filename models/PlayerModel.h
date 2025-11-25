@@ -22,6 +22,9 @@ class PlayerModel {
             this->gold = 100;
             this->exp = 0;
         }
+        jobType getJobType(){
+            return job;
+        }
         string getJob(){
             switch (job)
             {
@@ -36,6 +39,9 @@ class PlayerModel {
             default:
                 return "未知";
             }
+        }
+        void setJob(jobType newJob){
+            this->job = newJob;
         }
         //取得函式
         int getCalcExpReq()
@@ -222,12 +228,34 @@ class PlayerModel {
                 break;
         }
     }
+    int CalcDef(){
+        int def = (level) + (attr_def);
+        if (equippedHelmet.name != ""){
+            def += equippedHelmet.effect;
+        }
+        if (equippedChestplate.name != ""){
+            def += equippedChestplate.effect;
+        }
+        if (equippedLeggings.name != ""){
+            def += equippedLeggings.effect;
+        }
+        if (equippedBoots.name != ""){
+            def += equippedBoots.effect;
+        }
+        return def;
+    }
+    int CalcDamage(){
+        int dmg = (level * 2) + (attr_dmg);
+        if (equippedWeapon.name != ""){
+            dmg += equippedWeapon.effect;
+        }
+        return dmg;
+    }
     void addStat(int statType){
         if (statType < 0 || statType > 3) return;
         if (attr_lvl < 1) return;
         attr_lvl--;
         switch(statType){
-            
             case 0:
                 attr_dmg++;
                 break;

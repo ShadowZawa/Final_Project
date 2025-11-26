@@ -1,3 +1,4 @@
+#pragma execution_character_set("utf-8")
 #ifndef PLAYERMODEL_H
 #define PLAYERMODEL_H
 
@@ -8,7 +9,7 @@ enum jobType {
     WARRIOR,
     MAGE,
     ARCHER,
-    THIEF
+    THIEF,
 };
 
 

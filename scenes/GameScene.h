@@ -53,9 +53,10 @@ inline Component GameScene::Create(
         "向西移動",
         "戰鬥",
     };
+
     static std::vector<std::string> combat_items = {
         "普通攻擊",
-        "技能攻擊",
+        controller.getPlayer().getSkillName(),
         "使用道具",
         "逃跑",
     };
@@ -77,7 +78,12 @@ inline Component GameScene::Create(
                 break;
             case 1:
                 //controller.SkillAttack();
-                controller.LogEvent("你對敵人使用了技能攻擊！");
+                if (controller.getPlayer().getMp() < 10) {
+                    controller.LogEvent("魔力不足，無法使用技能！");
+                    break;
+                }
+                controller.getMutablePlayer().useMp(10);
+                controller.LogEvent("你對敵人使用了" + controller.getPlayer().getSkillName() + "！");
                 break;
             case 2:
                 onBackpack();  // 打開背包
@@ -110,7 +116,7 @@ inline Component GameScene::Create(
                 controller.LogEvent("向西移動到 " + controller.getCurrentLocationName());
                 break;
             case 4:
-                controller.Combat(); // 預設與第一個敵人戰鬥
+                controller.Combat(); 
                 // controller.LogEvent("與敵人展開戰鬥！");
                 break;
             }

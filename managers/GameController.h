@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <cstdlib>
+#include <chrono>
 using namespace std;
 
 class GameController
@@ -59,7 +60,7 @@ public:
         }
     }
     void BuyItem(const ItemModel& item) {
-        if (worldController.getWorld(current_loc).getName() != "維多利亞港" || "弓箭手村") {
+        if (getCurrentLocationName() != "維多利亞港" && getCurrentLocationName() != "弓箭手村") {
             LogEvent("只能在村莊購買物品。");
             return;
         }
@@ -108,15 +109,22 @@ public:
         {
             return result;
         }
+        // 僅回傳已達顯示時間的訊息
+        auto now = std::chrono::steady_clock::now();
         for (int i = (int)data_log.size() - 1; i >= 0 && (int)result.size() < size; --i)
         {
-            result.push_back(data_log[i]);
+            const auto &entry = data_log[i];
+            if (entry.show_at <= now) {
+                result.push_back(entry.msg);
+            }
         }
         return result; // result[0] 為最新紀錄
     }
-    void LogEvent(const string &event)
+    void LogEvent(const string &event, float delay_s=0)
     {
-        data_log.push_back(event);
+        // 將訊息加入佇列，設定延遲顯示時間，不阻塞其他邏輯。
+        auto show_time = std::chrono::steady_clock::now() + std::chrono::microseconds((int)(delay_s * 1000));
+        data_log.push_back({event, show_time});
     }
     // 戰鬥行為
     void Attack()
@@ -147,6 +155,10 @@ public:
                 LogEvent("獲得物品：" + it.name);
             }
             enemies.erase(enemies.begin() + enemy_index);
+            if (enemies.size() < 2){
+                LogEvent("刷新了新的敵人", 1);
+                worldController.getWorld(current_loc).SpawnRandomEnemies();
+            }
             is_combat = false;
             enemy_index = -1;
             return;
@@ -154,7 +166,7 @@ public:
         // 怪物反擊
         int edmg = enemies[enemy_index].attack;
         player.takeDamage(edmg);
-        LogEvent(enemies[enemy_index].name + " 反擊你造成 " + to_string(edmg) + " 點傷害");
+        LogEvent(enemies[enemy_index].name + " 反擊你造成 " + to_string(edmg) + " 點傷害", 1);
         if (player.getHp() <= 0)
         {
             is_combat = false;
@@ -202,6 +214,45 @@ public:
             }
             this->current_loc = 0; //傳送回維多利亞港
             LogEvent("使用了 " + item.name + "，傳送回維多利亞港。");
+            inventoryController.removeItem(index);
+        }else if (item.type == ItemModel::SCROLL_SKILL) {
+            // Placeholder: 技能卷軸使用效果
+            if (!is_combat) {
+                LogEvent("沒有選定的敵人。");
+                return;
+            }
+            auto &enemies = worldController.getWorld(current_loc).getCurrentEnemies();
+            LogEvent("對" + enemies[enemy_index].name + "使用了 " + item.name + "卷軸");
+            enemies[enemy_index].hp -= item.effect;
+            if (enemies[enemy_index].hp <= 0)
+            {
+                LogEvent(enemies[enemy_index].name + " 被擊敗！");
+                // 移除已死亡的敵人
+                if (player.gainExp(enemies[enemy_index].calcDropExp()))
+                {
+                    LogEvent("升級！目前等級：" + to_string(player.getLevel()));
+                }
+                else
+                {
+                    LogEvent("獲得 " + to_string(enemies[enemy_index].calcDropExp()) + " 點經驗值");
+                }
+                // 掉落物品
+                for (const auto &it : enemies[enemy_index].dropItems)
+                {
+                    inventoryController.addItem(it);
+                    LogEvent("獲得物品：" + it.name);
+                }
+                enemies.erase(enemies.begin() + enemy_index);
+                if (enemies.size() < 2)
+                {
+                    LogEvent("刷新了新的敵人", 1);
+                    worldController.getWorld(current_loc).SpawnRandomEnemies();
+                }
+                is_combat = false;
+                enemy_index = -1;
+                return;
+            }
+
             inventoryController.removeItem(index);
         } else if(item.type == ItemModel::WAND || item.type == ItemModel::BOW || item.type == ItemModel::SWORD || item.type == ItemModel::KNIFE || item.type == ItemModel::HELMET || item.type == ItemModel::CHESTPLATE || item.type == ItemModel::LEGGINGS || item.type == ItemModel::BOOTS) {
              EquipItem(index);
@@ -299,7 +350,11 @@ public:
 private:
     bool is_combat;
     int enemy_index;
-    vector<string> data_log;
+    struct LogEntry {
+        string msg;
+        std::chrono::steady_clock::time_point show_at;
+    };
+    vector<LogEntry> data_log;
     int current_loc;
     mutable WorldController worldController;
     PlayerModel player;

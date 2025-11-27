@@ -107,7 +107,7 @@ int main() {
     auto enhancement_ui = EnhancementUI::Create(controller, [&] { current_popup = PopupType::NONE; });
     auto shop_ui = ShopUI::Create(controller, [&] { current_popup = PopupType::NONE; });
     auto stats_ui = StatsUI::Create(controller, [&] { current_popup = PopupType::NONE; });
-    auto map_ui = MapUI::Create([&] { current_popup = PopupType::NONE; });
+    auto map_ui = MapUI::Create(controller, [&] { current_popup = PopupType::NONE; });
     
     
     // 主容器

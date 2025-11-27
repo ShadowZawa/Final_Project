@@ -3,6 +3,7 @@
 
 
 #include <string>
+#include <vector>
 using namespace std;
 
 struct ItemModel
@@ -35,9 +36,16 @@ struct ItemModel
 
 };
 
-class SuitModel{
-public:
+struct suitEffect{
+    int dmg;
+    int def;
+    int hp;
+    int mp;
+    int count;
+};
+
+struct SuitModel{
+    string id;
     string name;
-    string description;
-    int effect; // 套裝效果(全屬性加成)
+    vector<suitEffect> effects;
 };

@@ -185,6 +185,9 @@ inline Component MainScene::Create(
         *current_state = MainSceneState::LOGIN;
     });
     
+    // 刪除角色的共享狀態
+    auto character_to_delete_index = std::make_shared<int>(-1);
+    
     // ===== 創建角色畫面 =====
     Component create_character_name_input = Input(character_name.get(), "輸入角色名稱");
     
@@ -250,7 +253,7 @@ inline Component MainScene::Create(
         login_container, register_container, forgot_container, character_container, create_container
     }, (int*)current_state.get());
     
-    auto with_events = CatchEvent(main_container, [selected_character, current_state, current_username, &authManager](Event event) {
+    auto with_events = CatchEvent(main_container, [selected_character, current_state, current_username, character_to_delete_index, &authManager](Event event) {
         if (*current_state == MainSceneState::SELECT_CHARACTER) {
             auto characters = authManager.getCharacterNames(*current_username);
             int max_idx = characters.size() > 0 ? characters.size() : 1;
@@ -262,11 +265,43 @@ inline Component MainScene::Create(
                 *selected_character = (*selected_character - 1 + max_idx) % max_idx;
                 return true;
             }
+            // 按下 Delete 或 'd' 鍵刪除角色
+            if ((event == Event::Delete || event == Event::Character('d')) && characters.size() > 0) {
+                *character_to_delete_index = *selected_character;
+                return true;
+            }
         }
         return false;
     });
     
-    return Renderer(with_events, [=, &authManager] {
+    return Renderer(with_events, [=, &authManager, &dataManager] {
+        // 處理角色刪除請求
+        if (*character_to_delete_index >= 0) {
+            auto chars = authManager.getCharacterNames(*current_username);
+            if (*character_to_delete_index < chars.size()) {
+                std::string char_to_delete = chars[*character_to_delete_index];
+                
+                // 從 AuthManager 刪除
+                if (authManager.deleteCharacter(*current_username, char_to_delete)) {
+                    // 從 DataManager 刪除存檔
+                    dataManager.deleteCharacter(*current_username, char_to_delete);
+                    
+                    *error_message = "已刪除角色：" + char_to_delete;
+                    
+                    // 調整選擇索引
+                    auto updated_chars = authManager.getCharacterNames(*current_username);
+                    if (*selected_character >= updated_chars.size() && updated_chars.size() > 0) {
+                        *selected_character = updated_chars.size() - 1;
+                    } else if (updated_chars.empty()) {
+                        *selected_character = 0;
+                    }
+                } else {
+                    *error_message = "刪除角色失敗！";
+                }
+            }
+            *character_to_delete_index = -1; // 重置
+        }
+        
         Element content;
         
         switch (*current_state) {
@@ -349,7 +384,16 @@ inline Component MainScene::Create(
                         if (i == *selected_character) {
                             char_text = char_text | bold | color(Color::Yellow);
                         }
-                        character_list.push_back(char_text);
+                        
+                        // 將角色名稱和刪除按鈕放在同一行
+                        int idx = i;
+                        auto delete_btn_text = text("❌");
+                        auto row = hbox({
+                            char_text | flex,
+                            text("  "),
+                            delete_btn_text | size(WIDTH, EQUAL, 3)
+                        });
+                        character_list.push_back(row);
                     }
                 }
                 
@@ -359,6 +403,8 @@ inline Component MainScene::Create(
                     separator(),
                     text("你的角色 (" + std::to_string(characters.size()) + "/3):") | bold,
                     vbox(character_list) | frame | size(HEIGHT, EQUAL, 8),
+                    separator(),
+                    text("提示：按 'd' 或 Delete 鍵刪除選中的角色") | dim | center,
                     separator(),
                     (*error_message != "" ? text(*error_message) | color(Color::Red) | center : text("")),
                     separator(),

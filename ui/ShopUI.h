@@ -20,18 +20,28 @@ inline Component ShopUI::Create(GameController& controller, std::function<void()
     
     // 商店商品列表
     static const std::vector<ItemModel> shop_items = {
+        // 藥水
         {"小型生命藥水", "恢復50點生命值的藥水。", 10, 50, 0, ItemModel::POTION, ""},
         {"中型生命藥水", "恢復150點生命值的藥水。", 25, 150, 0, ItemModel::POTION, ""},
         {"大型生命藥水", "恢復300點生命值的藥水。", 50, 300, 0, ItemModel::POTION, ""},
+        // 卷軸
         {"回家卷軸(維多利亞港)", "使用後可傳送回維多利亞港。", 40, 0, 0, ItemModel::SCROLL_TELEPORT, ""},
         {"回家卷軸(弓箭手村)", "使用後可傳送回弓箭手村。", 40, 4, 0, ItemModel::SCROLL_TELEPORT, ""},
+        {"強化卷軸", "使用後有機率提升一件裝備的強化等級。", 10, 1, 0, ItemModel::SCROLL_UPGRADE, ""},
+        {"技能卷軸(天怒)", "對怪物造成999點傷害", 100, 999, 0, ItemModel::SCROLL_SKILL, ""},
+        // 每個職業的武器
         {"鋼鐵劍", "一把堅固的鋼鐵劍，攻擊力+15。", 200, 15, 0, ItemModel::SWORD, ""},
         {"獵人弓", "適合遠程攻擊的獵人弓，攻擊力+12。", 180, 12, 0, ItemModel::BOW, ""},
         {"精鋼匕首", "敏捷刺客的首選，攻擊力+10。", 150, 10, 0, ItemModel::KNIFE, ""},
-        {"法師長袍", "提升魔法防禦的長袍，防禦+8。", 160, 8, 0, ItemModel::CHESTPLATE, ""},
-        {"皮革頭盔", "基礎防護頭盔，防禦+5。", 100, 5, 0, ItemModel::HELMET, ""},
+        {"魔法杖", "蘊含魔力的魔法杖，攻擊力+8。", 170, 8, 0, ItemModel::WAND, ""},
+        // 防具
+        {"鐵靴", "基本防護的鐵製靴子，防禦+4。", 120, 4, 0, ItemModel::BOOTS, "iron_man"},
+        {"鐵製護腿", "基本防護的鐵製護腿，防禦+6。", 140, 6, 0, ItemModel::LEGGINGS, "iron_man"},
+        {"鐵甲", "基本防護的鐵製胸甲，防禦+8。", 160, 8, 0, ItemModel::CHESTPLATE, "iron_man"},
+        {"鐵盔", "基礎防護的鐵製頭盔，防禦+5。", 100, 5, 0, ItemModel::HELMET, "iron_man"},
+
     };
-    
+
     auto buy_btn = Button("購買 [Enter]", [&controller, selected_index]() {
         int idx = *selected_index;
         if (idx < 0 || idx >= (int)shop_items.size()) return;

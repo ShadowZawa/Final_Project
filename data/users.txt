@@ -1,5 +1,15 @@
 USER
+a
+a
+1
+aa
+USER
 aaaa
 wwww
 1
 2
+USER
+test
+test
+1
+chara1

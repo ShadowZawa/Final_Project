@@ -119,7 +119,7 @@ public:
             
             // 重建玩家物件
             jobType job = stringToJobType(jobStr);
-            player = PlayerModel(level, job);
+            player = PlayerModel(level, job, exp, attr_lvl, attr_dmg, attr_def, attr_hp, attr_mp);
             // 這裡需要在PlayerModel中添加setter方法，或使用friend class
             // 暫時透過damage和heal來調整
             int hpDiff = hp - player.getHp();
@@ -211,11 +211,19 @@ public:
         return remove(filename.c_str()) == 0;
     }
     
+    // 刪除角色（與deleteSave相同，提供統一接口）
+    bool deleteCharacter(const string& username, const string& characterName) {
+        return deleteSave(username, characterName);
+    }
+    
     // 創建新角色存檔（初始化）
     bool createNewCharacter(const string& username, const string& characterName, int job = 0) {
         // 創建一個新的玩家和空背包
-        PlayerModel newPlayer(1, static_cast<jobType>(job));
+        PlayerModel newPlayer(1, static_cast<jobType>(job), 0,3);
+        newPlayer.initClassEffect();
+        newPlayer.addGold(100); // 初始金幣100
         InventoryController newInventory;
+        newInventory.InitBasicItem();
         string startingMap = "維多利亞港";  // 預設起始地圖
         
         return save(username, characterName, newPlayer, newInventory, startingMap);

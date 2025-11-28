@@ -29,6 +29,10 @@ inline Component StatsUI::Create(GameController& controller, std::function<void(
     auto add_mp_btn = Button("+", [&controller]() { controller.getMutablePlayer().addStat(3); });
     auto remove_mp_btn = Button("-", [&controller]() { controller.getMutablePlayer().removeStat(3); });
     
+    auto add_skill1_btn = Button("+", [&controller]() { controller.getMutablePlayer().addSkillLevel(1); });
+    auto remove_skill1_btn = Button("-", [&controller]() { controller.getMutablePlayer().removeSkillLevel(1); });
+    auto add_skill2_btn = Button("+", [&controller]() { controller.getMutablePlayer().addSkillLevel(2); });
+    auto remove_skill2_btn = Button("-", [&controller]() { controller.getMutablePlayer().removeSkillLevel(2); });
     auto close_btn = Button("關閉 [ESC]", onClose);
     
     auto button_container = Container::Vertical({
@@ -36,6 +40,8 @@ inline Component StatsUI::Create(GameController& controller, std::function<void(
         Container::Horizontal({add_def_btn, remove_def_btn}),
         Container::Horizontal({add_hp_btn, remove_hp_btn}),
         Container::Horizontal({add_mp_btn, remove_mp_btn}),
+        Container::Horizontal({add_skill1_btn, remove_skill1_btn}),
+        Container::Horizontal({add_skill2_btn, remove_skill2_btn}),
         close_btn,
     });
     
@@ -44,6 +50,8 @@ inline Component StatsUI::Create(GameController& controller, std::function<void(
                                         add_def_btn, remove_def_btn,
                                         add_hp_btn, remove_hp_btn,
                                         add_mp_btn, remove_mp_btn,
+                                        add_skill1_btn, remove_skill1_btn,
+                                        add_skill2_btn, remove_skill2_btn,
                                         close_btn] {
         auto player = controller.getPlayer();
         int available_points = player.getAttrLvl();
@@ -68,9 +76,8 @@ inline Component StatsUI::Create(GameController& controller, std::function<void(
 
                        // 右側：屬性點分配
                        vbox({
-                           text("屬性點分配") | bold | center,
-                           separator(),
-                           text("可用點數: " + std::to_string(available_points)) |
+                           text("點數分配") | bold | center,
+                           text("可用屬性點數: " + std::to_string(available_points)) |
                                (available_points > 0 ? color(Color::Green) : color(Color::White)) | bold,
                            separator(),
                            hbox({
@@ -98,7 +105,20 @@ inline Component StatsUI::Create(GameController& controller, std::function<void(
                                remove_mp_btn->Render() | size(WIDTH, EQUAL, 5),
                            }),
                            separator(),
-                           text("每次升級獲得3點屬性點") | dim,
+                           text("可用技能點數: " + std::to_string(player.getSkillLevel())) |
+                               (player.getSkillLevel() > 0 ? color(Color::Green) : color(Color::White)) | bold,
+                           hbox({
+                               text("普攻等級: " + std::to_string(player.getSkill1Level())) | size(WIDTH, EQUAL, 20),
+                               add_skill1_btn->Render() | size(WIDTH, EQUAL, 5),
+                               text(" "),
+                               remove_skill1_btn->Render() | size(WIDTH, EQUAL, 5),
+                           }),
+                           hbox({
+                               text("技能等級: " + std::to_string(player.getSkill2Level())) | size(WIDTH, EQUAL, 20),
+                               add_skill2_btn->Render() | size(WIDTH, EQUAL, 5),
+                               text(" "),
+                               remove_skill2_btn->Render() | size(WIDTH, EQUAL, 5),
+                           }),
                        }) | flex |
                            border,
                    }),

@@ -127,14 +127,19 @@ public:
         data_log.push_back({event, show_time});
     }
     // 戰鬥行為
-    void Attack()
+    void Attack(int type=0)
     {
         if (!is_combat)
             return;
         auto &enemies = worldController.getWorld(current_loc).getCurrentEnemies();
         if (enemy_index < 0 || enemy_index >= (int)enemies.size())
             return;
-        int dmg = player.CalcDamage(); 
+        int dmg = player.CalcDamage();
+        if (type == 0){
+            dmg += player.getSkill1Level(); // 普攻加成
+        } else if (type == 1){
+            dmg += player.getSkill2Level() * 5; // 職業技能加成
+        }
         enemies[enemy_index].hp -= dmg;
         LogEvent("你對" + enemies[enemy_index].name + "造成 " + to_string(dmg) + " 點傷害");
         if (enemies[enemy_index].hp <= 0)

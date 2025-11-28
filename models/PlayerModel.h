@@ -20,7 +20,7 @@ const vector<SuitModel> suits = {
 class PlayerModel
 {
 public:
-    PlayerModel(int level = 1, jobType job = WARRIOR, int exp=0, int attr_lvl=0, int attr_dmg=0, int attr_def=0, int attr_hp=0, int attr_mp=0)
+    PlayerModel(int level = 1, jobType job = WARRIOR, int exp=0, int attr_lvl=0, int attr_dmg=0, int attr_def=0, int attr_hp=0, int attr_mp=0, int skill1_lvl=1, int skill2_lvl=1, int skill_lvl=1)
     {
         this->level = level;
         this->job = job;
@@ -33,6 +33,10 @@ public:
         this->attr_def = attr_def;
         this->attr_hp = attr_hp;
         this->attr_mp = attr_mp;
+
+        this->skill1_lvl = skill1_lvl;
+        this->skill2_lvl = skill2_lvl;
+        this->skill_lvl = skill_lvl;
         checkSuitEffects();
         initClassEffect();
     }
@@ -111,6 +115,33 @@ public:
     {
         level++;
         attr_lvl += 3;
+        skill_lvl++;
+    }
+    int getSkillLevel() { return skill_lvl; }
+    int getSkill1Level() { return skill1_lvl; }
+    int getSkill2Level() { return skill2_lvl; }    
+    void addSkillLevel(int skillNumber)
+    {
+        if (skill_lvl >0){
+            skill_lvl--;
+            if (skillNumber == 1)
+                skill1_lvl++;
+            else if (skillNumber == 2)
+                skill2_lvl++;
+        }
+    }
+    void removeSkillLevel(int skillNumber)
+    {
+        if (skillNumber == 1 && skill1_lvl > 1)
+        {
+            skill1_lvl--;
+            skill_lvl++;
+        }
+        else if (skillNumber == 2 && skill2_lvl > 1)
+        {
+            skill2_lvl--;
+            skill_lvl++;
+        }
     }
     void takeDamage(int damage)
     {
@@ -452,6 +483,10 @@ private:
     int mp = 50;
     int gold = 100;
     int exp = 0;
+    //skill level
+    int skill_lvl = 1;
+    int skill1_lvl = 1;
+    int skill2_lvl = 1;
     //class basic attr
     int basic_dmg = 0;
     int basic_def = 0;

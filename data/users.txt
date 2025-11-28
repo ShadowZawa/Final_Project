@@ -11,5 +11,4 @@ wwww
 USER
 test
 test
-1
-chara1
+0

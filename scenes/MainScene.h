@@ -402,7 +402,7 @@ inline Component MainScene::Create(
                     text("歡迎回來，" + *current_username + "！") | center,
                     separator(),
                     text("你的角色 (" + std::to_string(characters.size()) + "/3):") | bold,
-                    vbox(character_list) | frame | size(HEIGHT, EQUAL, 8),
+                    vbox(character_list) | frame | size(HEIGHT, EQUAL, 5),
                     separator(),
                     text("提示：按 'd' 或 Delete 鍵刪除選中的角色") | dim | center,
                     separator(),
@@ -410,8 +410,8 @@ inline Component MainScene::Create(
                     separator(),
                     vbox({
                         (characters.size() > 0 ? character_select_button->Render() : text("選擇角色") | dim) | size(WIDTH, EQUAL, 20) | center,
-                        character_create_button->Render() | size(WIDTH, EQUAL, 20) | center,
-                        character_logout_button->Render() | size(WIDTH, EQUAL, 20) | center,
+                        hbox({character_create_button->Render() | size(WIDTH, EQUAL, 20),
+                        character_logout_button->Render() | size(WIDTH, EQUAL, 20) }) | center,
                     }),
                 }) | border | size(WIDTH, EQUAL, 50);
                 break;

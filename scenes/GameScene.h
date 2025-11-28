@@ -25,7 +25,8 @@ public:
         std::function<void()> onEnhancement,
         std::function<void()> onShop,
         std::function<void()> onStats,
-        std::function<void()> onMap);
+        std::function<void()> onMap,
+        std::function<void()> onStorage);
 }; 
 
 // 實作
@@ -36,7 +37,8 @@ inline Component GameScene::Create(
     std::function<void()> onEnhancement,
     std::function<void()> onShop,
     std::function<void()> onStats,
-    std::function<void()> onMap)
+    std::function<void()> onMap,
+    std::function<void()> onStorage)
 {
     auto backpack_btn = Button("[B]背包", onBackpack);
     auto equipment_btn = Button("[E]裝備", onEquipment);
@@ -44,6 +46,7 @@ inline Component GameScene::Create(
     auto shop_btn = Button("[S]商店", onShop);
     auto stats_btn = Button("[C]狀態", onStats);
     auto map_btn = Button("[M]地圖", onMap);
+    auto storage_btn = Button("[I]倉庫", onStorage);
 
     // 操作選單
     static std::vector<std::string> action_items = {
@@ -227,6 +230,8 @@ inline Component GameScene::Create(
                        stats_btn->Render(),
                        separator(),
                        map_btn->Render(),
+                       separator(),
+                       storage_btn->Render(),
                    }) | border |
                        size(HEIGHT, EQUAL, 5) | flex,
                }),

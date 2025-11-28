@@ -11,4 +11,6 @@ wwww
 USER
 test
 test
-0
+2
+y1
+y2

@@ -14,6 +14,7 @@
 #include "ui/ShopUI.h"
 #include "ui/StatsUI.h"
 #include "ui/MapUI.h"
+#include "ui/StorageUI.h"
 #include "models/PlayerModel.h"
 #include "managers/AuthManager.h"
 #include "managers/DataManager.h"
@@ -32,7 +33,8 @@ enum class PopupType {
     ENHANCEMENT,
     SHOP,
     STATS,
-    MAP
+    MAP,
+    STORAGE
 };
 
 int main() {
@@ -98,7 +100,8 @@ int main() {
         [&] { current_popup = PopupType::ENHANCEMENT; }, // U - 強化
         [&] { current_popup = PopupType::SHOP; },       // S - 商店
         [&] { current_popup = PopupType::STATS; },       // C - 狀態
-        [&] { current_popup = PopupType::MAP; }         // M - 地圖
+        [&] { current_popup = PopupType::MAP; },         // M - 地圖
+        [&] { current_popup = PopupType::STORAGE; }      // I - 倉庫
     );
     
     // 彈出介面
@@ -108,6 +111,7 @@ int main() {
     auto shop_ui = ShopUI::Create(controller, [&] { current_popup = PopupType::NONE; });
     auto stats_ui = StatsUI::Create(controller, [&] { current_popup = PopupType::NONE; });
     auto map_ui = MapUI::Create(controller, [&] { current_popup = PopupType::NONE; });
+    auto storage_ui = StorageUI::Create(controller.getInventory(), dataManager, [&] { current_popup = PopupType::NONE; });
     
     
     // 主容器
@@ -126,6 +130,7 @@ int main() {
     auto shop_maybe = Maybe(shop_ui, [&] { return current_popup == PopupType::SHOP; });
     auto stats_maybe = Maybe(stats_ui, [&] { return current_popup == PopupType::STATS; });
     auto map_maybe = Maybe(map_ui, [&] { return current_popup == PopupType::MAP; });
+    auto storage_maybe = Maybe(storage_ui, [&] { return current_popup == PopupType::STORAGE; });
     
     
     // 主容器 - 包含遊戲場景和彈窗
@@ -136,7 +141,8 @@ int main() {
         enhancement_maybe,
         shop_maybe,
         stats_maybe,
-        map_maybe
+        map_maybe,
+        storage_maybe
     });
     
     // 渲染器 - 處理彈出視窗
@@ -172,6 +178,9 @@ int main() {
                     break;
                 case PopupType::MAP:
                     popup_view = map_ui->Render();
+                    break;
+                case PopupType::STORAGE:
+                    popup_view = storage_ui->Render();
                     break;
                 default:
                     break;
@@ -222,6 +231,10 @@ int main() {
             }
             if (event == Event::Character('m') || event == Event::Character('M')) {
                 current_popup = PopupType::MAP;
+                return true;
+            }
+            if (event == Event::Character('i') || event == Event::Character('I')) {
+                current_popup = PopupType::STORAGE;
                 return true;
             }
         }

@@ -71,9 +71,9 @@ public:
     }
     int getLevel() { return level; }
     int getHp() { return hp; }
-    int getMaxHp() { return 100 + level * 10; }
+    int getMaxHp() { return 100 + level * 10 + attr_hp*5+basic_hp+suit_hp; }
     int getMp() { return mp; }
-    int getMaxMp() { return 50 + level * 5; }
+    int getMaxMp() { return 50 + level * 5 + attr_mp*5+basic_mp+suit_mp; }
     int getGold() { return gold; }
     int getExp() { return exp; }
     int getAttrLvl() { return attr_lvl; }
@@ -116,6 +116,8 @@ public:
         level++;
         attr_lvl += 3;
         skill_lvl++;
+        hp = getMaxHp();
+        mp = getMaxMp();
     }
     int getSkillLevel() { return skill_lvl; }
     int getSkill1Level() { return skill1_lvl; }
@@ -233,6 +235,9 @@ public:
         default:
             break;
         }
+        
+        // 卸下裝備後重新計算套裝效果
+        checkSuitEffects();
     }
     ItemModel &getEquippedItem(ItemModel::Type type)
     {
@@ -258,49 +263,56 @@ public:
     }
     bool Equip(const ItemModel &item)
     {
+        bool equipped = false;
         // 武器裝備
         if (item.type == ItemModel::SWORD && this->job == WARRIOR)
         {
             this->equippedWeapon = item;
-            return true;
+            equipped = true;
         }
         else if (item.type == ItemModel::WAND && this->job == MAGE)
         {
             this->equippedWeapon = item;
-            return true;
+            equipped = true;
         }
         else if (item.type == ItemModel::BOW && this->job == ARCHER)
         {
             this->equippedWeapon = item;
-            return true;
+            equipped = true;
         }
         else if (item.type == ItemModel::KNIFE && this->job == THIEF)
         {
             this->equippedWeapon = item;
-            return true;
+            equipped = true;
         }
         // 防具裝備
         else if (item.type == ItemModel::HELMET)
         {
             this->equippedHelmet = item;
-            return true;
+            equipped = true;
         }
         else if (item.type == ItemModel::CHESTPLATE)
         {
             this->equippedChestplate = item;
-            return true;
+            equipped = true;
         }
         else if (item.type == ItemModel::LEGGINGS)
         {
             this->equippedLeggings = item;
-            return true;
+            equipped = true;
         }
         else if (item.type == ItemModel::BOOTS)
         {
             this->equippedBoots = item;
-            return true;
+            equipped = true;
         }
-        return false;
+        
+        // 裝備後重新計算套裝效果
+        if (equipped) {
+            checkSuitEffects();
+        }
+        
+        return equipped;
     }
     void removeStat(int statType)
     {
@@ -332,8 +344,6 @@ public:
     }
     int CalcDef()
     {
-        initClassEffect();
-        checkSuitEffects();
         int def = (level) + (attr_def);
         if (equippedHelmet.name != "")
         {
@@ -357,8 +367,6 @@ public:
     }
     int CalcDamage()
     {
-        initClassEffect();
-        checkSuitEffects();
         int dmg = (level * 2) + (attr_dmg);
         if (equippedWeapon.name != "")
         {
@@ -368,6 +376,28 @@ public:
         dmg += suit_dmg;
         return dmg;
     }
+    
+    // 獲取套裝效果資訊
+    map<string, int> getSuitCounts() const {
+        map<string, int> suitCount;
+        if (equippedHelmet.name != "" && equippedHelmet.suit != "")
+            suitCount[equippedHelmet.suit]++;
+        if (equippedChestplate.name != "" && equippedChestplate.suit != "")
+            suitCount[equippedChestplate.suit]++;
+        if (equippedLeggings.name != "" && equippedLeggings.suit != "")
+            suitCount[equippedLeggings.suit]++;
+        if (equippedBoots.name != "" && equippedBoots.suit != "")
+            suitCount[equippedBoots.suit]++;
+        if (equippedWeapon.name != "" && equippedWeapon.suit != "")
+            suitCount[equippedWeapon.suit]++;
+        return suitCount;
+    }
+    
+    int getSuitDmg() const { return suit_dmg; }
+    int getSuitDef() const { return suit_def; }
+    int getSuitHp() const { return suit_hp; }
+    int getSuitMp() const { return suit_mp; }
+    
     void addStat(int statType)
     {
         if (statType < 0 || statType > 3)

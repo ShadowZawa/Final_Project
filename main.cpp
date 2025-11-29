@@ -75,6 +75,13 @@ int main() {
                 controller.getInventory() = inventory;
                 // TODO: 設定當前地圖
                 
+                // 更新全域變數供訊號處理使用
+                g_dataManager = &dataManager;
+                g_controller = &controller;
+                g_username = current_username;
+                g_character_name = current_character_name;
+                g_state = GameState::PLAYING;
+                
                 // 判斷是否為新角色（等級為1且經驗為0）
                 if (player.getLevel() == 1 && player.getExp() == 0) {
                     controller.LogEvent("歡迎來到木風之谷，" + character_name + "!");
@@ -101,7 +108,7 @@ int main() {
         [&] { current_popup = PopupType::SHOP; },       // S - 商店
         [&] { current_popup = PopupType::STATS; },       // C - 狀態
         [&] { current_popup = PopupType::MAP; },         // M - 地圖
-        [&] { current_popup = PopupType::STORAGE; }      // I - 倉庫
+        [&] { current_popup = PopupType::STORAGE; }       // I - 倉庫
     );
     
     // 彈出介面
@@ -237,6 +244,20 @@ int main() {
                 current_popup = PopupType::STORAGE;
                 return true;
             }
+            // F5 手動存檔
+            if (event == Event::F5) {
+                if (!current_username.empty() && !current_character_name.empty()) {
+                    dataManager.save(
+                        current_username, 
+                        current_character_name, 
+                        controller.getMutablePlayer(), 
+                        controller.getInventory(), 
+                        controller.getCurrentLocationName()
+                    );
+                    controller.LogEvent("遊戲已儲存！");
+                }
+                return true;
+            }
         }
         
         return false;
@@ -245,11 +266,32 @@ int main() {
     // 使用 Loop 強制持續更新畫面（用於遊戲動畫）
     Loop loop(&screen, component_with_keys);
     
-    // 設定更新頻率（每 50ms）
+    // 設定更新頻率（每 50ms）並定期自動存檔
+    auto last_auto_save = std::chrono::steady_clock::now();
+    const auto auto_save_interval = std::chrono::seconds(60);  // 每60秒自動存檔
+    
     while (!loop.HasQuitted()) {
         loop.RunOnce();
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
         screen.Post(Event::Custom);  // 強制重新渲染
+        
+        // 定期自動存檔
+        auto now = std::chrono::steady_clock::now();
+        if (current_state == GameState::PLAYING && 
+            !current_username.empty() && 
+            !current_character_name.empty() &&
+            std::chrono::duration_cast<std::chrono::seconds>(now - last_auto_save) >= auto_save_interval) {
+            
+            dataManager.save(
+                current_username, 
+                current_character_name, 
+                controller.getMutablePlayer(), 
+                controller.getInventory(), 
+                controller.getCurrentLocationName()
+            );
+            last_auto_save = now;
+            controller.LogEvent("自動存檔完成");
+        }
     }
     
     // 遊戲結束時自動存檔

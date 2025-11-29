@@ -81,12 +81,17 @@ inline Component GameScene::Create(
                 break;
             case 1:
                 //controller.SkillAttack();
+                if (controller.getPlayer().getLevel() <5) {
+                    controller.LogEvent("尚未習得此技能！");
+                    break;
+                }
                 if (controller.getPlayer().getMp() < 10) {
                     controller.LogEvent("魔力不足，無法使用技能！");
                     break;
                 }
                 controller.getMutablePlayer().useMp(10);
                 controller.LogEvent("你對敵人使用了" + controller.getPlayer().getSkillName() + "！");
+                controller.Attack(1);
                 break;
             case 2:
                 onBackpack();  // 打開背包
@@ -138,7 +143,8 @@ inline Component GameScene::Create(
         map_btn,
         action_menu,
     });
-
+    controller.getPlayer().initClassEffect();
+    controller.getPlayer().checkSuitEffects();
     return Renderer(container, [=, &controller]() -> Element
                     {
         // HP 百分比

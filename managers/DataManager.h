@@ -60,6 +60,79 @@ public:
             file << "CURRENT_MAP" << endl;
             file << currentMap << endl;
 
+            // 儲存裝備資料
+            file << "EQUIPMENT_DATA" << endl;
+            
+            // 儲存武器
+            ItemModel weapon = playerRef.getEquippedItem(ItemModel::WEAPON);
+            if (weapon.name != "") {
+                file << weapon.name << "|"
+                     << weapon.description << "|"
+                     << weapon.price << "|"
+                     << weapon.effect << "|"
+                     << weapon.star << "|"
+                     << static_cast<int>(weapon.type) << "|"
+                     << weapon.suit << endl;
+            } else {
+                file << "NONE" << endl;
+            }
+            
+            // 儲存頭盔
+            ItemModel helmet = playerRef.getEquippedItem(ItemModel::HELMET);
+            if (helmet.name != "") {
+                file << helmet.name << "|"
+                     << helmet.description << "|"
+                     << helmet.price << "|"
+                     << helmet.effect << "|"
+                     << helmet.star << "|"
+                     << static_cast<int>(helmet.type) << "|"
+                     << helmet.suit << endl;
+            } else {
+                file << "NONE" << endl;
+            }
+            
+            // 儲存胸甲
+            ItemModel chestplate = playerRef.getEquippedItem(ItemModel::CHESTPLATE);
+            if (chestplate.name != "") {
+                file << chestplate.name << "|"
+                     << chestplate.description << "|"
+                     << chestplate.price << "|"
+                     << chestplate.effect << "|"
+                     << chestplate.star << "|"
+                     << static_cast<int>(chestplate.type) << "|"
+                     << chestplate.suit << endl;
+            } else {
+                file << "NONE" << endl;
+            }
+            
+            // 儲存護腿
+            ItemModel leggings = playerRef.getEquippedItem(ItemModel::LEGGINGS);
+            if (leggings.name != "") {
+                file << leggings.name << "|"
+                     << leggings.description << "|"
+                     << leggings.price << "|"
+                     << leggings.effect << "|"
+                     << leggings.star << "|"
+                     << static_cast<int>(leggings.type) << "|"
+                     << leggings.suit << endl;
+            } else {
+                file << "NONE" << endl;
+            }
+            
+            // 儲存靴子
+            ItemModel boots = playerRef.getEquippedItem(ItemModel::BOOTS);
+            if (boots.name != "") {
+                file << boots.name << "|"
+                     << boots.description << "|"
+                     << boots.price << "|"
+                     << boots.effect << "|"
+                     << boots.star << "|"
+                     << static_cast<int>(boots.type) << "|"
+                     << boots.suit << endl;
+            } else {
+                file << "NONE" << endl;
+            }
+
             // 儲存背包資料
             file << "INVENTORY_DATA" << endl;
             vector<ItemModel> items = inventoryRef.getItems();
@@ -146,8 +219,128 @@ public:
             }
             getline(file, currentMap);
 
+            // 讀取裝備資料（向後兼容：如果沒有 EQUIPMENT_DATA 則跳過）
+            getline(file, line);
+            if (line == "EQUIPMENT_DATA") {
+                // 新格式：讀取裝備資料
+                
+                // 讀取武器
+                getline(file, line);
+                if (line != "NONE") {
+                    stringstream ss(line);
+                    string token;
+                    ItemModel weapon;
+                    
+                    getline(ss, weapon.name, '|');
+                    getline(ss, weapon.description, '|');
+                    getline(ss, token, '|');
+                    weapon.price = stoi(token);
+                    getline(ss, token, '|');
+                    weapon.effect = stoi(token);
+                    getline(ss, token, '|');
+                    weapon.star = stoi(token);
+                    getline(ss, token, '|');
+                    weapon.type = static_cast<ItemModel::Type>(stoi(token));
+                    getline(ss, weapon.suit, '|');
+                    
+                    player.Equip(weapon);
+                }
+                
+                // 讀取頭盔
+                getline(file, line);
+                if (line != "NONE") {
+                    stringstream ss(line);
+                    string token;
+                    ItemModel helmet;
+                    
+                    getline(ss, helmet.name, '|');
+                    getline(ss, helmet.description, '|');
+                    getline(ss, token, '|');
+                    helmet.price = stoi(token);
+                    getline(ss, token, '|');
+                    helmet.effect = stoi(token);
+                    getline(ss, token, '|');
+                    helmet.star = stoi(token);
+                    getline(ss, token, '|');
+                    helmet.type = static_cast<ItemModel::Type>(stoi(token));
+                    getline(ss, helmet.suit, '|');
+                    
+                    player.Equip(helmet);
+                }
+                
+                // 讀取胸甲
+                getline(file, line);
+                if (line != "NONE") {
+                    stringstream ss(line);
+                    string token;
+                    ItemModel chestplate;
+                    
+                    getline(ss, chestplate.name, '|');
+                    getline(ss, chestplate.description, '|');
+                    getline(ss, token, '|');
+                    chestplate.price = stoi(token);
+                    getline(ss, token, '|');
+                    chestplate.effect = stoi(token);
+                    getline(ss, token, '|');
+                    chestplate.star = stoi(token);
+                    getline(ss, token, '|');
+                    chestplate.type = static_cast<ItemModel::Type>(stoi(token));
+                    getline(ss, chestplate.suit, '|');
+                    
+                    player.Equip(chestplate);
+                }
+                
+                // 讀取護腿
+                getline(file, line);
+                if (line != "NONE") {
+                    stringstream ss(line);
+                    string token;
+                    ItemModel leggings;
+                    
+                    getline(ss, leggings.name, '|');
+                    getline(ss, leggings.description, '|');
+                    getline(ss, token, '|');
+                    leggings.price = stoi(token);
+                    getline(ss, token, '|');
+                    leggings.effect = stoi(token);
+                    getline(ss, token, '|');
+                    leggings.star = stoi(token);
+                    getline(ss, token, '|');
+                    leggings.type = static_cast<ItemModel::Type>(stoi(token));
+                    getline(ss, leggings.suit, '|');
+                    
+                    player.Equip(leggings);
+                }
+                
+                // 讀取靴子
+                getline(file, line);
+                if (line != "NONE") {
+                    stringstream ss(line);
+                    string token;
+                    ItemModel boots;
+                    
+                    getline(ss, boots.name, '|');
+                    getline(ss, boots.description, '|');
+                    getline(ss, token, '|');
+                    boots.price = stoi(token);
+                    getline(ss, token, '|');
+                    boots.effect = stoi(token);
+                    getline(ss, token, '|');
+                    boots.star = stoi(token);
+                    getline(ss, token, '|');
+                    boots.type = static_cast<ItemModel::Type>(stoi(token));
+                    getline(ss, boots.suit, '|');
+                    
+                    player.Equip(boots);
+                }
+
+                // 讀取背包資料標記
+                getline(file, line);
+            }
+            // 如果 line 不是 "EQUIPMENT_DATA"，代表是舊格式，line 已經是 "INVENTORY_DATA"
+            
             // 讀取背包資料
-            getline(file, line); // "INVENTORY_DATA"
+            // line 此時應該是 "INVENTORY_DATA"（新格式剛讀取，舊格式從上面帶下來）
             if (line != "INVENTORY_DATA") {
                 return false;
             }

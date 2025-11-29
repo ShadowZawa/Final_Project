@@ -5,7 +5,7 @@ PLAYER_DATA
 法師
 110
 55
-200
+1999880
 0
 3
 0
@@ -14,6 +14,12 @@ PLAYER_DATA
 0
 CURRENT_MAP
 維多利亞港
+EQUIPMENT_DATA
+NONE
+NONE
+NONE
+NONE
+鐵靴|基本防護的鐵製靴子，防禦+4。|120|4|0|10|iron_man
 INVENTORY_DATA
 4
 小補血藥|恢復5點生命值的藥水。|50|5|0|0|

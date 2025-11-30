@@ -141,27 +141,27 @@ public:
             dmg += player.getSkill2Level() * 5; // 職業技能加成
         }
         enemies[enemy_index].hp -= dmg;
-        LogEvent("你對" + enemies[enemy_index].name + "造成 " + to_string(dmg) + " 點傷害");
+        LogEvent("你對" + enemies[enemy_index].name + "造成 " + to_string(dmg) + " 點傷害", 0.1f);
         if (enemies[enemy_index].hp <= 0)
         {
-            LogEvent(enemies[enemy_index].name + " 被擊敗！");
+            LogEvent(enemies[enemy_index].name + " 被擊敗！", 0.5f);
             // 移除已死亡的敵人
             if (player.gainExp(enemies[enemy_index].calcDropExp()))
             {
-                LogEvent("升級！目前等級：" + to_string(player.getLevel()));
+                LogEvent("升級！目前等級：" + to_string(player.getLevel()), 1.0f);
             }
             else
             {
-                LogEvent("獲得 " + to_string(enemies[enemy_index].calcDropExp()) + " 點經驗值");
+                LogEvent("獲得 " + to_string(enemies[enemy_index].calcDropExp()) + " 點經驗值", 1.0f);
             }
             // 掉落物品
             for (const auto& it : enemies[enemy_index].dropItems) {
                 inventoryController.addItem(it);
-                LogEvent("獲得物品：" + it.name);
+                LogEvent("獲得物品：" + it.name, 1.5f);
             }
             enemies.erase(enemies.begin() + enemy_index);
             if (enemies.size() < 2){
-                LogEvent("刷新了新的敵人", 1);
+                LogEvent("刷新了新的敵人", 1.5f);
                 worldController.getWorld(current_loc).SpawnRandomEnemies();
             }
             is_combat = false;
@@ -171,25 +171,18 @@ public:
         // 怪物反擊
         int edmg = enemies[enemy_index].attack;
         player.takeDamage(edmg);
-        LogEvent(enemies[enemy_index].name + " 反擊你造成 " + to_string(edmg) + " 點傷害", 1);
+        LogEvent(enemies[enemy_index].name + " 反擊你造成 " + to_string(edmg) + " 點傷害", 2.0f);
         if (player.getHp() <= 0)
         {
             is_combat = false;
             player.heal(player.getMaxHp()); // 死亡後恢復滿血
             player.recoverMp(player.getMaxMp()); // 死亡後恢復滿魔
             current_loc = 0; // 傳送回維多利亞港
-            LogEvent("你已死亡。");
-            LogEvent("頭腦一震暈眩，你發現似乎回到了維多利亞港...");
-            // 死亡處理留給遊戲其他機制
+            LogEvent("你已死亡。", 2.5f);
+            LogEvent("頭腦一震暈眩，你發現似乎回到了維多利亞港...", 2.5f);
         }
     }
-    void UseItem()
-    {
-        if (!is_combat)
-            return;
-        // Placeholder: 先回報尚未實作
-        LogEvent("使用道具(尚未實作)");
-    }
+
     void Flee()
     {
         if (!is_combat)

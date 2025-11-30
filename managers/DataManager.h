@@ -55,6 +55,9 @@ public:
             file << playerRef.getAttrDef() << endl;
             file << playerRef.getAttrHp() << endl;
             file << playerRef.getAttrMp() << endl;
+            file << playerRef.getSkillLevel() << endl;
+            file << playerRef.getSkill1Level() << endl;
+            file << playerRef.getSkill2Level() << endl;
             
             // 儲存當前地圖
             file << "CURRENT_MAP" << endl;
@@ -182,17 +185,17 @@ public:
                 return false;
             }
 
-            int level, hp, mp, gold, exp, attr_lvl, attr_dmg, attr_def, attr_hp, attr_mp;
+            int level, hp, mp, gold, exp, attr_lvl, attr_dmg, attr_def, attr_hp, attr_mp, skill_lvl, skill1_lvl, skill2_lvl;
             string jobStr;
             
             file >> level;
             getline(file, line); // 讀取換行符
             getline(file, jobStr); // 讀取職業字串
-            file >> hp >> mp >> gold >> exp >> attr_lvl >> attr_dmg >> attr_def >> attr_hp >> attr_mp;
+            file >> hp >> mp >> gold >> exp >> attr_lvl >> attr_dmg >> attr_def >> attr_hp >> attr_mp >> skill_lvl>> skill1_lvl >> skill2_lvl;
             
             // 重建玩家物件
             jobType job = stringToJobType(jobStr);
-            player = PlayerModel(level, job, exp, attr_lvl, attr_dmg, attr_def, attr_hp, attr_mp);
+            player = PlayerModel(level, job, exp, attr_lvl, attr_dmg, attr_def, attr_hp, attr_mp, skill_lvl, skill1_lvl, skill2_lvl);
             // 這裡需要在PlayerModel中添加setter方法，或使用friend class
             // 暫時透過damage和heal來調整
             int hpDiff = hp - player.getHp();

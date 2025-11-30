@@ -33,7 +33,11 @@ inline Component EquipmentUI::Create(GameController &controller, std::function<v
         string chestplate = (controller.getPlayer().getEquippedItem(ItemModel::CHESTPLATE).name == "") ? "無" : controller.getPlayer().getEquippedItem(ItemModel::CHESTPLATE).name;
         string leggings = (controller.getPlayer().getEquippedItem(ItemModel::LEGGINGS).name == "") ? "無" : controller.getPlayer().getEquippedItem(ItemModel::LEGGINGS).name;
         string boots = (controller.getPlayer().getEquippedItem(ItemModel::BOOTS).name == "") ? "無" : controller.getPlayer().getEquippedItem(ItemModel::BOOTS).name;
-        
+        if (weapon != "無") weapon += " (+" + to_string(controller.getPlayer().getEquippedItem(ItemModel::WEAPON).star) + ")";
+        if (helmet != "無") helmet += " (+" + to_string(controller.getPlayer().getEquippedItem(ItemModel::HELMET).star) + ")";
+        if (chestplate != "無") chestplate += " (+" + to_string(controller.getPlayer().getEquippedItem(ItemModel::CHESTPLATE).star) + ")";
+        if (leggings != "無") leggings += " (+" + to_string(controller.getPlayer().getEquippedItem(ItemModel::LEGGINGS).star) + ")";
+        if (boots != "無") boots += " (+" + to_string(controller.getPlayer().getEquippedItem(ItemModel::BOOTS).star) + ")";
         // 獲取套裝效果資訊
         auto suitCounts = controller.getPlayer().getSuitCounts();
         Elements suitElements;

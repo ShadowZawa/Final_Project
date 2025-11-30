@@ -75,13 +75,6 @@ int main() {
                 controller.getInventory() = inventory;
                 // TODO: 設定當前地圖
                 
-                // 更新全域變數供訊號處理使用
-                g_dataManager = &dataManager;
-                g_controller = &controller;
-                g_username = current_username;
-                g_character_name = current_character_name;
-                g_state = GameState::PLAYING;
-                
                 // 判斷是否為新角色（等級為1且經驗為0）
                 if (player.getLevel() == 1 && player.getExp() == 0) {
                     controller.LogEvent("歡迎來到木風之谷，" + character_name + "!");

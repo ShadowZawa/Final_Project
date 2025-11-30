@@ -76,8 +76,8 @@ inline Component GameScene::Create(
             switch (selected)
             {
             case 0:
-                controller.Attack();
                 controller.LogEvent("你對敵人進行了普通攻擊！");
+                controller.Attack();
                 break;
             case 1:
                 //controller.SkillAttack();
@@ -85,11 +85,11 @@ inline Component GameScene::Create(
                     controller.LogEvent("尚未習得此技能！");
                     break;
                 }
-                if (controller.getPlayer().getMp() < 10) {
+                if (controller.getPlayer().getMp() < 30) {
                     controller.LogEvent("魔力不足，無法使用技能！");
                     break;
                 }
-                controller.getMutablePlayer().useMp(10);
+                controller.getMutablePlayer().useMp( 30);
                 controller.LogEvent("你對敵人使用了" + controller.getPlayer().getSkillName() + "！");
                 controller.Attack(1);
                 break;

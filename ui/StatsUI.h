@@ -71,6 +71,21 @@ inline Component StatsUI::Create(GameController& controller, std::function<void(
                            text("生命: " + std::to_string(player.getHp()) + "/" + std::to_string(player.getMaxHp())),
                            text("魔力: " + std::to_string(player.getMp()) + "/" + std::to_string(player.getMaxMp())),
                            text("金幣: " + std::to_string(player.getGold()) + " G"),
+                           separator(),
+                           text("可用技能點數: " + std::to_string(player.getSkillLevel())) |
+                               (player.getSkillLevel() > 0 ? color(Color::Green) : color(Color::White)) | bold,
+                           hbox({
+                               text("普攻等級: " + std::to_string(player.getSkill1Level())) | size(WIDTH, EQUAL, 20),
+                               add_skill1_btn->Render() | size(WIDTH, EQUAL, 5),
+                               text(" "),
+                               remove_skill1_btn->Render() | size(WIDTH, EQUAL, 5),
+                           }),
+                           hbox({
+                               text("技能等級: " + std::to_string(player.getSkill2Level())) | size(WIDTH, EQUAL, 20),
+                               add_skill2_btn->Render() | size(WIDTH, EQUAL, 5),
+                               text(" "),
+                               remove_skill2_btn->Render() | size(WIDTH, EQUAL, 5),
+                           }),
                        }) | size(WIDTH, EQUAL, 30) |
                            border,
 
@@ -104,21 +119,7 @@ inline Component StatsUI::Create(GameController& controller, std::function<void(
                                text(" "),
                                remove_mp_btn->Render() | size(WIDTH, EQUAL, 5),
                            }),
-                           separator(),
-                           text("可用技能點數: " + std::to_string(player.getSkillLevel())) |
-                               (player.getSkillLevel() > 0 ? color(Color::Green) : color(Color::White)) | bold,
-                           hbox({
-                               text("普攻等級: " + std::to_string(player.getSkill1Level())) | size(WIDTH, EQUAL, 20),
-                               add_skill1_btn->Render() | size(WIDTH, EQUAL, 5),
-                               text(" "),
-                               remove_skill1_btn->Render() | size(WIDTH, EQUAL, 5),
-                           }),
-                           hbox({
-                               text("技能等級: " + std::to_string(player.getSkill2Level())) | size(WIDTH, EQUAL, 20),
-                               add_skill2_btn->Render() | size(WIDTH, EQUAL, 5),
-                               text(" "),
-                               remove_skill2_btn->Render() | size(WIDTH, EQUAL, 5),
-                           }),
+                           
                        }) | flex |
                            border,
                    }),

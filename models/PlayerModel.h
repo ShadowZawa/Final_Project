@@ -20,7 +20,7 @@ const vector<SuitModel> suits = {
 class PlayerModel
 {
 public:
-    PlayerModel(int level = 1, jobType job = WARRIOR, int exp=0, int attr_lvl=0, int attr_dmg=0, int attr_def=0, int attr_hp=0, int attr_mp=0, int skill1_lvl=1, int skill2_lvl=1, int skill_lvl=1)
+    PlayerModel(int level = 1, jobType job = WARRIOR, int exp = 0, int attr_lvl = 0, int attr_dmg = 0, int attr_def = 0, int attr_hp = 0, int attr_mp = 0, int skill_lvl = 1, int skill1_lvl = 1, int skill2_lvl = 1)
     {
         this->level = level;
         this->job = job;
@@ -490,15 +490,15 @@ public:
             basic_mp = 50;
             break;
         case ARCHER:
-            basic_dmg = 50;
+            basic_dmg = 5;
             basic_def = 0;
             basic_hp = 0;
             basic_mp = 0;
             break;
         case THIEF:
-            basic_dmg = 25;
+            basic_dmg = 3;
             basic_def = 0;
-            basic_hp = 25;
+            basic_hp = 20;
             basic_mp = 0;
             break;
         default:

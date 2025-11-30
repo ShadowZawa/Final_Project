@@ -17,13 +17,19 @@ public:
 
 inline Component ShopUI::Create(GameController& controller, std::function<void()> onClose) {
     auto selected_index = std::make_shared<int>(0);
+    auto scroll_offset = std::make_shared<int>(0);
     
     // 商店商品列表
     static const std::vector<ItemModel> shop_items = {
         // 藥水
-        {"小型生命藥水", "恢復50點生命值的藥水。", 10, 50, 0, ItemModel::POTION, ""},
-        {"中型生命藥水", "恢復150點生命值的藥水。", 25, 150, 0, ItemModel::POTION, ""},
-        {"大型生命藥水", "恢復300點生命值的藥水。", 50, 300, 0, ItemModel::POTION, ""},
+        {"小型生命藥水", "恢復50點生命值的藥水。", 10, 50, 0, ItemModel::POTION_HEALHP, ""},
+        {"中型生命藥水", "恢復150點生命值的藥水。", 25, 150, 0, ItemModel::POTION_HEALHP, ""},
+        {"大型生命藥水", "恢復300點生命值的藥水。", 50, 300, 0, ItemModel::POTION_HEALHP, ""},
+        {"小型魔力藥水", "恢復50點魔力值的藥水。", 10, 50, 0, ItemModel::POTION_HEALMP, ""},
+        {"中型魔力藥水", "恢復150點魔力值的藥水。", 25, 150, 0, ItemModel::POTION_HEALMP, ""},
+        {"大型魔力藥水", "恢復300點魔力值的藥水。", 50, 300, 0, ItemModel::POTION_HEALMP, ""},
+        {"傷害提升藥水", "提升20點傷害持續30秒。", 40, 20, 30, ItemModel::POTION_DAMAGEBOOST, ""},
+        
         // 卷軸
         {"回家卷軸(維多利亞港)", "使用後可傳送回維多利亞港。", 40, 0, 0, ItemModel::SCROLL_TELEPORT, ""},
         {"回家卷軸(弓箭手村)", "使用後可傳送回弓箭手村。", 40, 4, 0, ItemModel::SCROLL_TELEPORT, ""},
@@ -55,30 +61,54 @@ inline Component ShopUI::Create(GameController& controller, std::function<void()
     auto button_container = Container::Vertical({buy_btn, close_btn});
     
     // 方向鍵事件處理
-    auto with_events = CatchEvent(button_container, [selected_index](Event event) {
+    auto with_events = CatchEvent(button_container, [selected_index, scroll_offset](Event event) {
+        const int visible_items = 12;
+        
         if (event == Event::ArrowDown || event == Event::Character('j')) {
             *selected_index = (*selected_index + 1) % (int)shop_items.size();
+            
+            // 自動向下滾動
+            if (*selected_index >= *scroll_offset + visible_items) {
+                *scroll_offset = *selected_index - visible_items + 1;
+            }
+            // 循環回到頂部時重置滾動
+            if (*selected_index == 0) {
+                *scroll_offset = 0;
+            }
             return true;
         }
         if (event == Event::ArrowUp || event == Event::Character('k')) {
             *selected_index = (*selected_index - 1 + (int)shop_items.size()) % (int)shop_items.size();
+            
+            // 自動向上滾動
+            if (*selected_index < *scroll_offset) {
+                *scroll_offset = *selected_index;
+            }
+            // 循環回到底部時調整滾動
+            if (*selected_index == (int)shop_items.size() - 1) {
+                *scroll_offset = std::max(0, (int)shop_items.size() - visible_items);
+            }
             return true;
         }
         return false;
     });
     
-    return Renderer(with_events, [&controller, selected_index, buy_btn, close_btn] {
+    return Renderer(with_events, [&controller, selected_index, scroll_offset, buy_btn, close_btn] {
         int idx = *selected_index;
         int player_gold = controller.getPlayer().getGold();
         
-        // 生成商品列表
+        // 生成商品列表（只顯示可見範圍）
         Elements item_elements;
-        for (size_t i = 0; i < shop_items.size(); ++i) {
+        const int visible_items = 12;
+        int start_idx = *scroll_offset;
+        int end_idx = std::min(start_idx + visible_items, (int)shop_items.size());
+        
+        for (int i = start_idx; i < end_idx; ++i) {
             const auto& item = shop_items[i];
             std::string display = item.name + " - " + std::to_string(item.price) + " G";
             
             auto item_text = text("  " + display);
-            if ((int)i == idx) {
+            if (i == idx) {
                 item_text = text("> " + display) | bold | color(Color::Yellow);
             }
             
@@ -88,6 +118,16 @@ inline Component ShopUI::Create(GameController& controller, std::function<void()
             }
             
             item_elements.push_back(item_text);
+        }
+        
+        // 顯示滾動指示器
+        std::string scroll_indicator = "";
+        if (*scroll_offset > 0) {
+            scroll_indicator += "↑ ";
+        }
+        scroll_indicator += std::to_string(idx + 1) + "/" + std::to_string(shop_items.size());
+        if (end_idx < (int)shop_items.size()) {
+            scroll_indicator += " ↓";
         }
         
         // 當前選中商品的詳細資訊
@@ -115,9 +155,12 @@ inline Component ShopUI::Create(GameController& controller, std::function<void()
             separator(),
             hbox({
                 vbox({
-                    text("商品列表 (↑↓ 選擇)") | center,
+                    hbox({
+                        text("商品列表 (↑↓ 選擇)") | center | flex,
+                        text(scroll_indicator) | dim
+                    }),
                     separator(),
-                    vbox(item_elements) | vscroll_indicator | frame | flex
+                    vbox(item_elements) | flex
                 }) | size(WIDTH, EQUAL, 35) | border,
                 
                 vbox({

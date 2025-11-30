@@ -171,7 +171,15 @@ inline Component GameScene::Create(
         if (enemies.empty()) {
             enemy_lines.push_back(text("沒有敵人。") | dim);
         }
-
+        
+        // 藥水效果顯示
+        std::string potion_text = "藥水效果: ";
+        if (controller.getPlayer().getDamageBoostAmount() > 0) {
+            potion_text += "傷害 +" + std::to_string(controller.getPlayer().getDamageBoostAmount());
+        } else {
+            potion_text += "無";
+        }
+        
         return vbox({
                    hbox({
                        vbox({
@@ -184,7 +192,8 @@ inline Component GameScene::Create(
                            text("【角色詳細資訊】") | center | bold,
                            separator(),
                            hbox({text("經驗: " + std::to_string(controller.getPlayer().getExp()) + "/" + std::to_string(controller.getPlayer().getCalcExpReq())), text("攻擊: " + std::to_string(controller.getPlayer().CalcDamage())), text("防禦: " + std::to_string(controller.getPlayer().CalcDef()))}) | center,
-                       }) | border |
+                           text(potion_text) | center, 
+                        }) | border |
                            flex,
                        vbox({
                            text("【小地圖】") | center | bold,

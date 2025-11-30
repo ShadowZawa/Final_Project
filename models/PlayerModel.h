@@ -40,6 +40,19 @@ public:
         checkSuitEffects();
         initClassEffect();
     }
+    void addDamageBoost(int amount, int duration){
+        damageBoostAmount = amount;
+        damageBoostEndTime = std::chrono::steady_clock::now() + std::chrono::seconds(duration);
+    }
+    bool isDamageBoostActive() const {
+        return std::chrono::steady_clock::now() < damageBoostEndTime;
+    }
+    int getDamageBoostAmount() const {
+        if (isDamageBoostActive()) {
+            return damageBoostAmount;
+        }
+        return 0;
+    }
     jobType getJobType()
     {
         return job;
@@ -372,6 +385,13 @@ public:
         {
             dmg += equippedWeapon.effect;
         }
+        auto now = std::chrono::steady_clock::now();
+        if (now < damageBoostEndTime) {
+            dmg += damageBoostAmount;
+        }else{
+            damageBoostAmount = 0;
+
+        }
         dmg += basic_dmg;
         dmg += suit_dmg;
         return dmg;
@@ -506,6 +526,10 @@ public:
         }
     }
 private:
+
+    // potion boost
+    int damageBoostAmount = 0;
+    std::chrono::steady_clock::time_point damageBoostEndTime;
 
     jobType job = WARRIOR;
     int level = 1;

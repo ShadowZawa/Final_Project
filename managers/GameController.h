@@ -195,67 +195,91 @@ public:
     InventoryController& getInventory() {
         return inventoryController;
     }
-
+    
     void UseInventoryItem(int index) {
         if (index < 0 || index >= inventoryController.getSize()) return;
         
         ItemModel& item = inventoryController.getItem(index);
-        if (item.type == ItemModel::POTION) {
-            player.heal(item.effect);
-            LogEvent("使用了 " + item.name + "，恢復了 " + to_string(item.effect) + " 點生命。");
-            inventoryController.removeItem(index);
-        } else if(item.type == ItemModel::SCROLL_TELEPORT){
-            //使用回家卷軸
-            if (is_combat){
-                LogEvent("戰鬥中無法使用回家卷軸！");
-                return;
+        
+        switch (item.type) {
+            case ItemModel::POTION_DAMAGEBOOST:
+                // 增加傷害提升效果，持續30秒
+                player.addDamageBoost(item.effect, item.star);
+                LogEvent("使用了 " + item.name + "，傷害提升 " + to_string(item.effect) + " 點，持續" + to_string(item.star) + "秒。");
+                inventoryController.removeItem(index);
+                break;
+            case ItemModel::POTION_HEALHP:
+                player.heal(item.effect);
+                LogEvent("使用了 " + item.name + "，恢復了 " + to_string(item.effect) + " 點生命。");
+                inventoryController.removeItem(index);
+                break;
+                
+            case ItemModel::POTION_HEALMP:
+                player.recoverMp(item.effect);
+                LogEvent("使用了 " + item.name + "，恢復了 " + to_string(item.effect) + " 點魔力。");
+                inventoryController.removeItem(index);
+                break;
+                
+            case ItemModel::SCROLL_TELEPORT:
+                if (is_combat) {
+                    LogEvent("戰鬥中無法使用回家卷軸！");
+                    return;
+                }
+                this->current_loc = 0;
+                LogEvent("使用了 " + item.name + "，傳送回維多利亞港。");
+                inventoryController.removeItem(index);
+                break;
+                
+            case ItemModel::SCROLL_SKILL: {
+                if (!is_combat) {
+                    LogEvent("沒有選定的敵人。");
+                    return;
+                }
+                auto &enemies = worldController.getWorld(current_loc).getCurrentEnemies();
+                LogEvent("對" + enemies[enemy_index].name + "使用了 " + item.name + "卷軸");
+                enemies[enemy_index].hp -= item.effect;
+                
+                if (enemies[enemy_index].hp <= 0) {
+                    LogEvent(enemies[enemy_index].name + " 被擊敗！");
+                    
+                    if (player.gainExp(enemies[enemy_index].calcDropExp())) {
+                        LogEvent("升級！目前等級：" + to_string(player.getLevel()));
+                    } else {
+                        LogEvent("獲得 " + to_string(enemies[enemy_index].calcDropExp()) + " 點經驗值");
+                    }
+                    
+                    for (const auto &it : enemies[enemy_index].dropItems) {
+                        inventoryController.addItem(it);
+                        LogEvent("獲得物品：" + it.name);
+                    }
+                    
+                    enemies.erase(enemies.begin() + enemy_index);
+                    if (enemies.size() < 2) {
+                        LogEvent("刷新了新的敵人", 1);
+                        worldController.getWorld(current_loc).SpawnRandomEnemies();
+                    }
+                    is_combat = false;
+                    enemy_index = -1;
+                    return;
+                }
+                inventoryController.removeItem(index);
+                break;
             }
-            this->current_loc = 0; //傳送回維多利亞港
-            LogEvent("使用了 " + item.name + "，傳送回維多利亞港。");
-            inventoryController.removeItem(index);
-        }else if (item.type == ItemModel::SCROLL_SKILL) {
-            // Placeholder: 技能卷軸使用效果
-            if (!is_combat) {
-                LogEvent("沒有選定的敵人。");
-                return;
-            }
-            auto &enemies = worldController.getWorld(current_loc).getCurrentEnemies();
-            LogEvent("對" + enemies[enemy_index].name + "使用了 " + item.name + "卷軸");
-            enemies[enemy_index].hp -= item.effect;
-            if (enemies[enemy_index].hp <= 0)
-            {
-                LogEvent(enemies[enemy_index].name + " 被擊敗！");
-                // 移除已死亡的敵人
-                if (player.gainExp(enemies[enemy_index].calcDropExp()))
-                {
-                    LogEvent("升級！目前等級：" + to_string(player.getLevel()));
-                }
-                else
-                {
-                    LogEvent("獲得 " + to_string(enemies[enemy_index].calcDropExp()) + " 點經驗值");
-                }
-                // 掉落物品
-                for (const auto &it : enemies[enemy_index].dropItems)
-                {
-                    inventoryController.addItem(it);
-                    LogEvent("獲得物品：" + it.name);
-                }
-                enemies.erase(enemies.begin() + enemy_index);
-                if (enemies.size() < 2)
-                {
-                    LogEvent("刷新了新的敵人", 1);
-                    worldController.getWorld(current_loc).SpawnRandomEnemies();
-                }
-                is_combat = false;
-                enemy_index = -1;
-                return;
-            }
-
-            inventoryController.removeItem(index);
-        } else if(item.type == ItemModel::WAND || item.type == ItemModel::BOW || item.type == ItemModel::SWORD || item.type == ItemModel::KNIFE || item.type == ItemModel::HELMET || item.type == ItemModel::CHESTPLATE || item.type == ItemModel::LEGGINGS || item.type == ItemModel::BOOTS) {
-             EquipItem(index);
-        } else {
-            LogEvent("此物品無法直接使用。");
+            
+            case ItemModel::WAND:
+            case ItemModel::BOW:
+            case ItemModel::SWORD:
+            case ItemModel::KNIFE:
+            case ItemModel::HELMET:
+            case ItemModel::CHESTPLATE:
+            case ItemModel::LEGGINGS:
+            case ItemModel::BOOTS:
+                EquipItem(index);
+                break;
+                
+            default:
+                LogEvent("此物品無法直接使用。");
+                break;
         }
     }
 

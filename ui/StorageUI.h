@@ -41,6 +41,10 @@ inline Component StorageUI::Create(
     auto selected_inventory_item = std::make_shared<int>(0);
     auto selected_storage_item = std::make_shared<int>(0);
     
+    // 滾動偏移量
+    auto inventory_scroll_offset = std::make_shared<int>(0);
+    auto storage_scroll_offset = std::make_shared<int>(0);
+    
     // 訊息顯示
     auto message = std::make_shared<std::string>("");
     
@@ -127,7 +131,7 @@ inline Component StorageUI::Create(
     });
     
     // 鍵盤事件處理
-    auto with_events = CatchEvent(button_container, [selected_tab, selected_inventory_item, selected_storage_item, &playerInventory, storage, onClose, deposit_button, withdraw_button, &dataManager](Event event) {
+    auto with_events = CatchEvent(button_container, [selected_tab, selected_inventory_item, selected_storage_item, inventory_scroll_offset, storage_scroll_offset, &playerInventory, storage, onClose, deposit_button, withdraw_button, &dataManager](Event event) {
         // Tab 切換
         if (event == Event::Tab) {
             *selected_tab = (*selected_tab + 1) % 2;
@@ -144,16 +148,35 @@ inline Component StorageUI::Create(
         // 在背包頁面
         if (*selected_tab == 0) {
             int max_idx = playerInventory.getSize() > 0 ? playerInventory.getSize() : 1;
+            const int visible_items = 12;
             
             if (event == Event::ArrowDown || event == Event::Character('j')) {
                 if (playerInventory.getSize() > 0) {
                     *selected_inventory_item = (*selected_inventory_item + 1) % max_idx;
+                    
+                    // 自動向下滾動
+                    if (*selected_inventory_item >= *inventory_scroll_offset + visible_items) {
+                        *inventory_scroll_offset = *selected_inventory_item - visible_items + 1;
+                    }
+                    // 循環回到頂部時重置滾動
+                    if (*selected_inventory_item == 0) {
+                        *inventory_scroll_offset = 0;
+                    }
                 }
                 return true;
             }
             if (event == Event::ArrowUp || event == Event::Character('k')) {
                 if (playerInventory.getSize() > 0) {
                     *selected_inventory_item = (*selected_inventory_item - 1 + max_idx) % max_idx;
+                    
+                    // 自動向上滾動
+                    if (*selected_inventory_item < *inventory_scroll_offset) {
+                        *inventory_scroll_offset = *selected_inventory_item;
+                    }
+                    // 循環回到底部時調整滾動
+                    if (*selected_inventory_item == max_idx - 1) {
+                        *inventory_scroll_offset = std::max(0, max_idx - visible_items);
+                    }
                 }
                 return true;
             }
@@ -168,16 +191,35 @@ inline Component StorageUI::Create(
         // 在倉庫頁面
         if (*selected_tab == 1) {
             int max_idx = storage->getSize() > 0 ? storage->getSize() : 1;
+            const int visible_items = 12;
             
             if (event == Event::ArrowDown || event == Event::Character('j')) {
                 if (storage->getSize() > 0) {
                     *selected_storage_item = (*selected_storage_item + 1) % max_idx;
+                    
+                    // 自動向下滾動
+                    if (*selected_storage_item >= *storage_scroll_offset + visible_items) {
+                        *storage_scroll_offset = *selected_storage_item - visible_items + 1;
+                    }
+                    // 循環回到頂部時重置滾動
+                    if (*selected_storage_item == 0) {
+                        *storage_scroll_offset = 0;
+                    }
                 }
                 return true;
             }
             if (event == Event::ArrowUp || event == Event::Character('k')) {
                 if (storage->getSize() > 0) {
                     *selected_storage_item = (*selected_storage_item - 1 + max_idx) % max_idx;
+                    
+                    // 自動向上滾動
+                    if (*selected_storage_item < *storage_scroll_offset) {
+                        *storage_scroll_offset = *selected_storage_item;
+                    }
+                    // 循環回到底部時調整滾動
+                    if (*selected_storage_item == max_idx - 1) {
+                        *storage_scroll_offset = std::max(0, max_idx - visible_items);
+                    }
                 }
                 return true;
             }
@@ -193,12 +235,17 @@ inline Component StorageUI::Create(
     });
     
     return Renderer(with_events, [=, &playerInventory, &dataManager] {
-        // 背包物品列表
+        const int visible_items = 12;
+        
+        // 背包物品列表（只顯示可見範圍）
         Elements inventory_elements;
         if (playerInventory.getSize() == 0) {
             inventory_elements.push_back(text("  (空)") | dim);
         } else {
-            for (int i = 0; i < playerInventory.getSize(); ++i) {
+            int start_idx = *inventory_scroll_offset;
+            int end_idx = std::min(start_idx + visible_items, playerInventory.getSize());
+            
+            for (int i = start_idx; i < end_idx; ++i) {
                 const auto& item = playerInventory.getItem(i);
                 std::string item_text = "  " + item.name;
                 if (item.star > 0) {
@@ -216,12 +263,15 @@ inline Component StorageUI::Create(
             }
         }
         
-        // 倉庫物品列表
+        // 倉庫物品列表（只顯示可見範圍）
         Elements storage_elements;
         if (storage->getSize() == 0) {
             storage_elements.push_back(text("  (空)") | dim);
         } else {
-            for (int i = 0; i < storage->getSize(); ++i) {
+            int start_idx = *storage_scroll_offset;
+            int end_idx = std::min(start_idx + visible_items, storage->getSize());
+            
+            for (int i = start_idx; i < end_idx; ++i) {
                 const auto& item = storage->getItem(i);
                 std::string item_text = "  " + item.name;
                 if (item.star > 0) {
@@ -249,18 +299,48 @@ inline Component StorageUI::Create(
             detail_info = item.description + "\n價值: " + std::to_string(item.price) + "G";
         }
         
+        // 背包滾動指示器
+        std::string inv_scroll_indicator = "";
+        if (playerInventory.getSize() > 0) {
+            if (*inventory_scroll_offset > 0) {
+                inv_scroll_indicator += "↑ ";
+            }
+            inv_scroll_indicator += std::to_string(*selected_inventory_item + 1) + "/" + std::to_string(playerInventory.getSize());
+            if (*inventory_scroll_offset + visible_items < playerInventory.getSize()) {
+                inv_scroll_indicator += " ↓";
+            }
+        }
+        
         auto inventory_panel = vbox({
-            text("我的背包 (" + std::to_string(playerInventory.getSize()) + " 個物品)") | 
-                (*selected_tab == 0 ? bold | color(Color::Cyan) : bold),
+            hbox({
+                text("我的背包 (" + std::to_string(playerInventory.getSize()) + " 個物品)") | 
+                    (*selected_tab == 0 ? bold | color(Color::Cyan) : bold) | flex,
+                text(inv_scroll_indicator) | dim
+            }),
             separator(),
-            vbox(inventory_elements) | frame | size(HEIGHT, EQUAL, 15)
+            vbox(inventory_elements) | size(HEIGHT, EQUAL, 15)
         }) | border;
         
+        // 倉庫滾動指示器
+        std::string stor_scroll_indicator = "";
+        if (storage->getSize() > 0) {
+            if (*storage_scroll_offset > 0) {
+                stor_scroll_indicator += "↑ ";
+            }
+            stor_scroll_indicator += std::to_string(*selected_storage_item + 1) + "/" + std::to_string(storage->getSize());
+            if (*storage_scroll_offset + visible_items < storage->getSize()) {
+                stor_scroll_indicator += " ↓";
+            }
+        }
+        
         auto storage_panel = vbox({
-            text("共用倉庫 (" + std::to_string(storage->getSize()) + " 個物品)") | 
-                (*selected_tab == 1 ? bold | color(Color::Cyan) : bold),
+            hbox({
+                text("共用倉庫 (" + std::to_string(storage->getSize()) + " 個物品)") | 
+                    (*selected_tab == 1 ? bold | color(Color::Cyan) : bold) | flex,
+                text(stor_scroll_indicator) | dim
+            }),
             separator(),
-            vbox(storage_elements) | frame | size(HEIGHT, EQUAL, 15)
+            vbox(storage_elements) | size(HEIGHT, EQUAL, 15)
         }) | border;
         
         auto main_content = hbox({
@@ -277,7 +357,6 @@ inline Component StorageUI::Create(
             text(detail_info) | dim | center | size(HEIGHT, EQUAL, 2),
             separator(),
             (*message != "" ? text(*message) | color(Color::Green) | center : text("") | center),
-            separator(),
             hbox({
                 deposit_button->Render() | size(WIDTH, EQUAL, 18),
                 text("  "),

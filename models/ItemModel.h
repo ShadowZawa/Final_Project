@@ -22,6 +22,10 @@ struct ItemModel
         SCROLL_UPGRADE,  // 強化卷軸
         MISC,   // 雜物
 
+        POTION_HEALHP, // 回血藥水
+        POTION_HEALMP, // 回魔藥水
+        POTION_DAMAGEBOOST, // 傷害提升藥水
+
         WEAPON, // 武器
         HELMET,  // 頭盔
         CHESTPLATE, // 胸甲

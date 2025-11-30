@@ -356,8 +356,6 @@ inline Component EnhancementUI::Create(GameController &controller, std::function
                         text("在指定範圍內按下強化") | color(Color::Green),
                         text("否則成功率 -10%") | color(Color::Red),
                         separator(),
-                        text("💎 需要消耗 1 個強化卷軸") | (has_scroll ? color(Color::Yellow) : color(Color::Red)),
-                        separator(),
                         hbox({
                             (is_equipped && has_scroll ? enhance_btn->Render() : text(is_equipped ? "缺少卷軸" : "未裝備") | dim) | size(WIDTH, EQUAL, 15),
                             text(" "),

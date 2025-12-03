@@ -120,10 +120,10 @@ public:
         }
         return result; // result[0] 為最新紀錄
     }
-    void LogEvent(const string &event, float delay_s=0)
+    void LogEvent(const string &event, int delay_s=0)
     {
         // 將訊息加入佇列，設定延遲顯示時間，不阻塞其他邏輯。
-        auto show_time = std::chrono::steady_clock::now() + std::chrono::microseconds((int)(delay_s * 1000));
+        auto show_time = std::chrono::steady_clock::now() + std::chrono::seconds(delay_s);
         data_log.push_back({event, show_time});
     }
     // 戰鬥行為
@@ -141,27 +141,27 @@ public:
             dmg += player.getSkill2Level() * 5; // 職業技能加成
         }
         enemies[enemy_index].hp -= dmg;
-        LogEvent("你對" + enemies[enemy_index].name + "造成 " + to_string(dmg) + " 點傷害", 0.1f);
+        LogEvent("你對" + enemies[enemy_index].name + "造成 " + to_string(dmg) + " 點傷害", 1);
         if (enemies[enemy_index].hp <= 0)
         {
-            LogEvent(enemies[enemy_index].name + " 被擊敗！", 0.5f);
+            LogEvent(enemies[enemy_index].name + " 被擊敗！", 2);
             // 移除已死亡的敵人
             if (player.gainExp(enemies[enemy_index].calcDropExp()))
             {
-                LogEvent("升級！目前等級：" + to_string(player.getLevel()), 1.0f);
+                LogEvent("升級！目前等級：" + to_string(player.getLevel()), 2);
             }
             else
             {
-                LogEvent("獲得 " + to_string(enemies[enemy_index].calcDropExp()) + " 點經驗值", 1.0f);
+                LogEvent("獲得 " + to_string(enemies[enemy_index].calcDropExp()) + " 點經驗值", 2);
             }
             // 掉落物品
             for (const auto& it : enemies[enemy_index].dropItems) {
                 inventoryController.addItem(it);
-                LogEvent("獲得物品：" + it.name, 1.5f);
+                LogEvent("獲得物品：" + it.name, 2);
             }
             enemies.erase(enemies.begin() + enemy_index);
             if (enemies.size() < 2){
-                LogEvent("刷新了新的敵人", 1.5f);
+                LogEvent("刷新了新的敵人", 2);
                 worldController.getWorld(current_loc).SpawnRandomEnemies();
             }
             is_combat = false;
@@ -171,15 +171,15 @@ public:
         // 怪物反擊
         int edmg = enemies[enemy_index].attack;
         player.takeDamage(edmg);
-        LogEvent(enemies[enemy_index].name + " 反擊你造成 " + to_string(edmg) + " 點傷害", 2.0f);
+        LogEvent(enemies[enemy_index].name + " 反擊你造成 " + to_string(edmg) + " 點傷害", 3);
         if (player.getHp() <= 0)
         {
             is_combat = false;
             player.heal(player.getMaxHp()); // 死亡後恢復滿血
             player.recoverMp(player.getMaxMp()); // 死亡後恢復滿魔
             current_loc = 0; // 傳送回維多利亞港
-            LogEvent("你已死亡。", 2.5f);
-            LogEvent("頭腦一震暈眩，你發現似乎回到了維多利亞港...", 2.5f);
+            LogEvent("你已死亡。", 4);
+            LogEvent("頭腦一震暈眩，你發現似乎回到了維多利亞港...", 4);
         }
     }
 

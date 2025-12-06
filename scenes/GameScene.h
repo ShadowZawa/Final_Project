@@ -59,7 +59,7 @@ inline Component GameScene::Create(
 
     static std::vector<std::string> combat_items = {
         "普通攻擊",
-        controller.getPlayer().getSkillName(),
+        "職業技能",
         "使用道具",
         "逃跑",
     };
@@ -152,6 +152,9 @@ inline Component GameScene::Create(
         
         // MP 百分比
         float mp_ratio = static_cast<float>(controller.getPlayer().getMp()) / controller.getPlayer().getMaxMp();
+        
+        // 動態獲取職業技能名稱
+        std::string skill_name = controller.getPlayer().getSkillName();
         // 取得最新優先的 10 筆紀錄並動態生成行
         auto latest_logs = controller.getLog(10); // 最新在前
         // 準備要放入 UI 的 Elements
@@ -230,6 +233,21 @@ inline Component GameScene::Create(
                    vbox({
                        text("【操作選項】") | center | bold,
                        separator(),
+                       (controller.isCombat() 
+                           ? vbox({
+                               text("普通攻擊"),
+                               text(skill_name),
+                               text("使用道具"),
+                               text("逃跑")
+                             })
+                           : vbox({
+                               text("向北移動"),
+                               text("向南移動"),
+                               text("向東移動"),
+                               text("向西移動"),
+                               text("戰鬥")
+                             })
+                       ) | center,
                        final_menu->Render(),
                    }) | border |
                        size(HEIGHT, EQUAL, 10) | flex,

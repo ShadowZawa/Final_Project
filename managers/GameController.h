@@ -145,6 +145,7 @@ public:
         if (enemies[enemy_index].hp <= 0)
         {
             LogEvent(enemies[enemy_index].name + " 被擊敗！", 2);
+            player.addGold(enemies[enemy_index].level * 10);
             // 移除已死亡的敵人
             if (player.gainExp(enemies[enemy_index].calcDropExp()))
             {
@@ -225,8 +226,8 @@ public:
                     LogEvent("戰鬥中無法使用回家卷軸！");
                     return;
                 }
-                this->current_loc = 0;
-                LogEvent("使用了 " + item.name + "，傳送回維多利亞港。");
+                this->current_loc = item.effect;
+                LogEvent("使用了 " + item.name + "，傳送回 " + worldController.getWorld(current_loc).getName() + "。");
                 inventoryController.removeItem(index);
                 break;
                 
@@ -241,7 +242,7 @@ public:
                 
                 if (enemies[enemy_index].hp <= 0) {
                     LogEvent(enemies[enemy_index].name + " 被擊敗！");
-                    
+                    player.addGold(enemies[enemy_index].level * 10);
                     if (player.gainExp(enemies[enemy_index].calcDropExp())) {
                         LogEvent("升級！目前等級：" + to_string(player.getLevel()));
                     } else {
